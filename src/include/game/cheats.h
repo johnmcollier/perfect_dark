@@ -4,6 +4,8 @@
 #include "data.h"
 #include "types.h"
 
+#define CHEAT_ALLDOORS_TEXT "All Doors Unlocked\n"
+
 extern struct menudialogdef g_CheatsMenuDialog;
 extern struct menudialogdef g_CheatsFunMenuDialog;
 extern struct menudialogdef g_CheatsGameplayMenuDialog;

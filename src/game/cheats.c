@@ -102,6 +102,7 @@ struct cheat g_Cheats[] = {
 	{ L_MPWEAPONS_116, WEAPON_RCP45,      0,                             0,       CHEATFLAG_FIRINGRANGE                        }, // RC-P45
 #ifndef PLATFORM_N64
 	{ L_MPWEAPONS_215, 0,                 SOLOSTAGEINDEX_EXTRACTION,     DIFF_A,  CHEATFLAG_COMPLETION                         }, // Dual wield all guns
+	{ L_MPWEAPONS_073, 0,                 SOLOSTAGEINDEX_EXTRACTION,     DIFF_A,  CHEATFLAG_COMPLETION                         }, // All doors unlocked			  
 #endif
 };
 
@@ -177,6 +178,10 @@ void cheatActivate(s32 cheat_id)
 			setCurrentPlayerNum(prevplayernum);
 		}
 		break;
+	case CHEAT_ALLDOORSUNLOCKED:
+		// Treat all doors as unlocked
+		g_Vars.currentplayer -> alldoorsunlocked = true;
+		break;
 	}
 
 	if (cheat_id < 32) {
@@ -213,6 +218,10 @@ void cheatDeactivate(s32 cheat_id)
 
 			setCurrentPlayerNum(prevplayernum);
 		}
+		break;
+	case CHEAT_ALLDOORSUNLOCKED:
+		// Unset
+		g_Vars.currentplayer -> alldoorsunlocked = false;
 		break;
 	}
 
@@ -392,9 +401,13 @@ MenuItemHandlerResult cheatMenuHandleBuddyCheckbox(s32 operation, struct menuite
 char *cheatGetNameIfUnlocked(struct menuitem *item)
 {
 	if (cheatIsUnlocked(item->param)) {
-		return langGet(g_Cheats[item->param].nametextid);
+		if (item->param == CHEAT_ALLDOORSUNLOCKED) {
+			// When retrieving the display name for the "All Doors Unlocked" cheat, directly return its string, as it doesn't exist in the assets used for cheats
+			return CHEAT_ALLDOORS_TEXT;
+		} else {
+			return langGet(g_Cheats[item->param].nametextid);
+		}
 	}
-
 	return langGet(L_MPWEAPONS_074); // "----------"
 }
 
@@ -667,6 +680,12 @@ char *cheatGetMarquee(struct menuitem *arg0)
 			&& g_Menus[g_MpPlayerNum].curdialog->focuseditem->type == MENUITEMTYPE_CHECKBOX) {
 		cheat_id = g_Menus[g_MpPlayerNum].curdialog->focuseditem->param;
 
+		if (cheat_id == CHEAT_ALLDOORSUNLOCKED) {
+			strcpy(cheatname, CHEAT_ALLDOORS_TEXT);
+		} else {
+			strcpy(cheatname, langGet(g_Cheats[cheat_id].nametextid));
+		}
+
 		if (g_Menus[g_MpPlayerNum].curdialog->definition == &g_CheatsBuddiesMenuDialog
 				&& g_Menus[g_MpPlayerNum].curdialog->focuseditem == &g_CheatsBuddiesMenuItems[0]) {
 			// Velvet
@@ -675,11 +694,10 @@ char *cheatGetMarquee(struct menuitem *arg0)
 			// Show cheat name
 			sprintf(g_CheatMarqueeString, "%s: %s\n",
 					g_Menus[g_MpPlayerNum].curdialog->definition == &g_CheatsBuddiesMenuDialog ? langGet(L_MPWEAPONS_143) : langGet(L_MPWEAPONS_136), // "Buddy Available", "Cheat available"
-					langGet(g_Cheats[cheat_id].nametextid)
+					cheatname
 			);
 		} else {
 			// Locked
-			strcpy(cheatname, langGet(g_Cheats[cheat_id].nametextid));
 			ptr = cheatname;
 
 			while (*ptr != '\n') {
@@ -858,6 +876,9 @@ s32 cheatGetTime(s32 cheat_id)
 #if VERSION >= VERSION_NTSC_1_0
 char *cheatGetName(s32 cheat_id)
 {
+	if (cheat_id == CHEAT_ALLDOORSUNLOCKED) {
+		return CHEAT_ALLDOORS_TEXT;
+	}
 	return langGet(g_Cheats[cheat_id].nametextid);
 }
 #endif
@@ -1102,6 +1123,17 @@ struct menuitem g_CheatsGameplayMenuItems[] = {
 		0,
 		cheatCheckboxMenuHandler,
 	},
+#if (VERSION == VERSION_NTSC_1_0) || (VERSION == VERSION_NTSC_FINAL)
+// Only enable "All Doors Unlocked" cheat on NTSC 1.0 or final, as the cheat text is not localized
+	{
+		MENUITEMTYPE_CHECKBOX,
+		CHEAT_ALLDOORSUNLOCKED,
+		0,
+		(uintptr_t)&cheatGetNameIfUnlocked,
+		0,
+		cheatCheckboxMenuHandler,
+	},
+#endif
 #endif
 	{
 		MENUITEMTYPE_SEPARATOR,
