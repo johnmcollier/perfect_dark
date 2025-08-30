@@ -990,8 +990,8 @@ static void gfx_sp_vertex(size_t n_vertices, size_t dest_index, const Vtx* verti
 
         x = gfx_adjust_x_for_aspect_ratio(x, w);
 
-        short U = v->s * rsp.texture_scaling_factor.s >> 16;
-        short V = v->t * rsp.texture_scaling_factor.t >> 16;
+		float U = v->s * (rsp.texture_scaling_factor.s + 1)/65536.0f;
+		float V = v->t * (rsp.texture_scaling_factor.t + 1)/65536.0f;
 
         const struct NormalColor *vcn = &rsp.vertex_colors[v->colour >> 2];
 
@@ -1316,11 +1316,9 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, bo
 
             if ((cms & G_TX_CLAMP) && ((cms & G_TX_MIRROR) || tex_width1 != tex_width2[i])) {
                 tm |= 1 << 2 * i;
-                cms &= ~G_TX_CLAMP;
             }
             if ((cmt & G_TX_CLAMP) && ((cmt & G_TX_MIRROR) || tex_height1 != tex_height2[i])) {
                 tm |= 1 << (2 * i + 1);
-                cmt &= ~G_TX_CLAMP;
             }
 
             if (rendering_state.textures[i]) {
@@ -1416,18 +1414,12 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, bo
                 }
             }
 
-            buf_vbo[buf_vbo_len++] = u / tex_width[t];
-            buf_vbo[buf_vbo_len++] = v / tex_height[t];
+			LoadedTexture &tex = rdp.loaded_texture[rdp.texture_tile[tile].tmem];
+			uint32_t tex_w = is_rect && !tex.is_external ? tex_width[t] : tex_width2[t];
+			uint32_t tex_h = is_rect && !tex.is_external ? tex_height[t] : tex_height2[t];
 
-            bool clampS = tm & (1 << 2 * t);
-            bool clampT = tm & (1 << (2 * t + 1));
-
-            if (clampS) {
-                buf_vbo[buf_vbo_len++] = (tex_width2[t] - 0.5f) / tex_width[t];
-            }
-            if (clampT) {
-                buf_vbo[buf_vbo_len++] = (tex_height2[t] - 0.5f) / tex_height[t];
-            }
+			buf_vbo[buf_vbo_len++] = u / tex_w;
+			buf_vbo[buf_vbo_len++] = v / tex_h;
         }
 
         if (use_fog) {
