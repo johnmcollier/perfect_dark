@@ -1747,41 +1747,53 @@ static void gfx_dp_set_tile_size(uint8_t tile, uint16_t uls, uint16_t ult, uint1
     rdp.textures_changed[1] = true;
 }
 
+static void load_tlut(const uint16_t* base, uint8_t tile, uint32_t count) {
+	if (rdp.texture_tile[tile].tmem == 256) {
+		rdp.palette_addrs[0] = (const uint8_t *)base;
+		if (count >= 256) {
+			rdp.palette_addrs[1] = (const uint8_t *)(base + 128);
+		}
+	} else {
+		rdp.palette_addrs[1] = (const uint8_t *)base;
+	}
+
+	const uint32_t palofs = rdp.texture_tile[tile].tmem - 256;
+	SUPPORT_CHECK(palofs + count <= 256);
+
+	const uint16_t *src = base;
+	uint16_t *dst = rdp.palette + palofs;
+	for (uint32_t i = 0; i < count; ++i) {
+		*dst++ = PD_BE16(*src++);
+	}
+
+	rdp.textures_changed[0] = rdp.textures_changed[1] = true;
+}
 static void gfx_dp_load_tlut(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t lrt) {
-    // SUPPORT_CHECK(tile == G_TX_LOADTILE);
+	// SUPPORT_CHECK(tile == G_TX_LOADTILE);
+	SUPPORT_CHECK(rdp.texture_to_load.siz == G_IM_SIZ_16b);
+	SUPPORT_CHECK(rdp.texture_tile[tile].tmem >= 256);
+
+	rdp.texture_tile[tile].uls = uls;
+	rdp.texture_tile[tile].ult = ult;
+	rdp.texture_tile[tile].lrs = lrs;
+	rdp.texture_tile[tile].lrt = lrt;
+
+	const uint32_t width = (lrs - uls + 1);
+	const uint32_t height = (lrt - ult + 1);
+	const uint32_t pitch = rdp.texture_to_load.width + 1;
+	const uint32_t count =  width * height;
+	const uint16_t *base = (const uint16_t *)rdp.texture_to_load.addr + pitch * ult + uls;
+
+	load_tlut(base, tile, count);
+}
+
+static void gfx_dp_load_tlut2(uint32_t offset, uint32_t count) {
+	uint8_t tile = 6;
     SUPPORT_CHECK(rdp.texture_to_load.siz == G_IM_SIZ_16b);
     SUPPORT_CHECK(rdp.texture_tile[tile].tmem >= 256);
 
-    rdp.texture_tile[tile].uls = uls;
-    rdp.texture_tile[tile].ult = ult;
-    rdp.texture_tile[tile].lrs = lrs;
-    rdp.texture_tile[tile].lrt = lrt;
-
-    const uint32_t width = (lrs - uls + 1);
-    const uint32_t height = (lrt - ult + 1);
-    const uint32_t pitch = rdp.texture_to_load.width + 1;
-    const uint32_t count =  width * height;
-    const uint16_t *base = (const uint16_t *)rdp.texture_to_load.addr + pitch * ult + uls;
-
-    if (rdp.texture_tile[tile].tmem == 256) {
-        rdp.palette_addrs[0] = (const uint8_t *)base;
-        if (count >= 256) {
-            rdp.palette_addrs[1] = (const uint8_t *)(base + 128);
-        }
-    } else {
-        rdp.palette_addrs[1] = (const uint8_t *)base;
-    }
-
-    const uint32_t palofs = rdp.texture_tile[tile].tmem - 256;
-    SUPPORT_CHECK(palofs + count <= 256);
-
-    const uint16_t *src = base;
-    uint16_t *dst = rdp.palette + palofs;
-    for (uint32_t i = 0; i < count; ++i) {
-        *dst++ = PD_BE16(*src++);
-    }
-
-    rdp.textures_changed[0] = rdp.textures_changed[1] = true;
+    const uint16_t *base = (const uint16_t *)rdp.texture_to_load.addr + offset/2;
+	load_tlut(base, tile, count);
 }
 
 static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t dxt) {
@@ -2294,7 +2306,10 @@ static void gfx_run_dl(Gfx* cmd) {
                 gfx_dp_set_tile_size(C1(24, 3), C0(12, 12), C0(0, 12), C1(12, 12), C1(0, 12));
                 break;
             case G_LOADTLUT:
-                gfx_dp_load_tlut(C1(24, 3), C0(14, 10), C0(2, 10), C1(14, 10), C1(2, 10));
+				gfx_dp_load_tlut(C1(24, 3), C0(14, 10), C0(2, 10), C1(14, 10), C1(2, 10));
+                break;
+            case G_LOADTLUT2:
+				gfx_dp_load_tlut2(C1(16, 16), C1(0, 16));
                 break;
             case G_SETENVCOLOR:
                 gfx_dp_set_env_color(C1(24, 8), C1(16, 8), C1(8, 8), C1(0, 8));

@@ -74,6 +74,13 @@
 	_g->words.w1 = _SHIFTL(0x06, 24, 8) | _SHIFTL((c), 14, 10) | _SHIFTL((d), 2, 10);       \
 }
 
+#define	gDPLoadTLUT07(pkt, a, b)				             \
+{                                                            \
+	Gfx *_g = (Gfx *)pkt;                                    \
+	_g->words.w0 = _SHIFTL(G_LOADTLUT2, 24, 8);              \
+	_g->words.w1 = _SHIFTL((a), 16, 16) | _SHIFTL((b), 0, 16); \
+}
+
 /**
  * Like gDPSetPrimColor, but is useful when the input colour is already in
  * RGBA format. It avoids unnecessary bitshifting and masking.

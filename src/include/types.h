@@ -6045,6 +6045,7 @@ struct tex {
 	/*0x0c*/ u32 next : 24;
 #else
 	/*0x0c*/ uintptr_t next;
+	         u16 tlutoffset;
 #endif
 };
 

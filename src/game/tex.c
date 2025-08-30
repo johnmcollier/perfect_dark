@@ -541,15 +541,8 @@ Gfx *texWriteLoadToTmemAddr(Gfx *gdl, struct tex *tex, s32 tmemoffset)
 			gDPLoadBlock(gdl++, 5, 0, 0, len - 1, 0);
 		}
 
-		{
-			s32 tmp = len;
-			s32 a2 = (u32)(0x3ff - tex->unk0a) < len ? (u32)(0x3ff - tex->unk0a) : 0;
-
-			tmp -= a2;
-
-			gDPLoadSync(gdl++);
-			gDPLoadTLUT06(gdl++, tmp, a2, tex->unk0a + tmp, a2);
-		}
+		gDPLoadSync(gdl++);
+		gDPLoadTLUT07(gdl++, tex->tlutoffset, tex->unk0a+1);
 	}
 
 	return gdl;
@@ -652,15 +645,8 @@ Gfx *texWriteLoadToTmemZero(Gfx *gdl, struct tex *tex)
 			gDPLoadBlock(gdl++, 5, 0, 0, len - 1, 0);
 		}
 
-		{
-			s32 tmp = len;
-			s32 a2 = (u32)(0x3ff - tex->unk0a) < len ? (u32)(0x3ff - tex->unk0a) : 0;
-
-			tmp -= a2;
-
-			gDPLoadSync(gdl++);
-			gDPLoadTLUT06(gdl++, tmp, a2, tex->unk0a + tmp, a2);
-		}
+		gDPLoadSync(gdl++);
+		gDPLoadTLUT07(gdl++, tex->tlutoffset, tex->unk0a+1);
 	}
 
 	return gdl;

@@ -401,13 +401,8 @@ void texSelect(Gfx **gdlptr, struct textureconfig *tconfig, u32 arg2, s32 arg3, 
 			gDPPipeSync(gdl++);
 
 			if (format == G_IM_FMT_CI) {
-				u32 a3 = lrs + 1;
-				u32 t0 = (0x3ff - tex->unk0a) < a3 ? (0x3ff - tex->unk0a) : 0;
-
-				a3 -= t0;
-
 				gDPLoadSync(gdl++);
-				gDPLoadTLUT06(gdl++, a3, t0, tex->unk0a + a3, t0);
+				gDPLoadTLUT07(gdl++, tex->tlutoffset, tex->unk0a+1);
 				gDPPipeSync(gdl++);
 
 				if (arg5) {
@@ -519,13 +514,8 @@ void texSelect(Gfx **gdlptr, struct textureconfig *tconfig, u32 arg2, s32 arg3, 
 			gDPPipeSync(gdl++);
 
 			if (format == G_IM_FMT_CI) {
-				u32 a2 = lrs + 1;
-				u32 a3 = (0x3ff - tex->unk0a) < a2 ? (0x3ff - tex->unk0a) : 0;
-
-				a2 -= a3;
-
 				gDPLoadSync(gdl++);
-				gDPLoadTLUT06(gdl++, a2, a3, tex->unk0a + a2, a3);
+				gDPLoadTLUT07(gdl++, tex->tlutoffset, tex->unk0a+1);
 				gDPPipeSync(gdl++);
 
 				if (arg5) {

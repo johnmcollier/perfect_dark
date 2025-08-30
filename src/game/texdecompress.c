@@ -300,6 +300,12 @@ s32 texInflateZlib(u8 *src, u8 *dst, bool hasloddata, s32 numlods, struct texpoo
 		}
 	}
 
+	// make sure the colors start at an even addr
+	if (totalbytesout & 1)
+		totalbytesout++;
+
+	pool->rightpos->tlutoffset = totalbytesout;
+
 	for (i = 0; i < numcolours; i++) {
 		dst[totalbytesout + 0] = palette[i] >> 8;
 		dst[totalbytesout + 1] = palette[i] & 0xff;
