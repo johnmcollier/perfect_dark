@@ -402,7 +402,7 @@ void texSelect(Gfx **gdlptr, struct textureconfig *tconfig, u32 arg2, s32 arg3, 
 
 			if (format == G_IM_FMT_CI) {
 				gDPLoadSync(gdl++);
-				gDPLoadTLUT07(gdl++, tex->tlutoffset, tex->unk0a+1);
+				gDPLoadTLUT07(gdl++, tex->tlutoffset, tex->numcolors + 1);
 				gDPPipeSync(gdl++);
 
 				if (arg5) {
@@ -515,7 +515,7 @@ void texSelect(Gfx **gdlptr, struct textureconfig *tconfig, u32 arg2, s32 arg3, 
 
 			if (format == G_IM_FMT_CI) {
 				gDPLoadSync(gdl++);
-				gDPLoadTLUT07(gdl++, tex->tlutoffset, tex->unk0a+1);
+				gDPLoadTLUT07(gdl++, tex->tlutoffset, tex->numcolors + 1);
 				gDPPipeSync(gdl++);
 
 				if (arg5) {
