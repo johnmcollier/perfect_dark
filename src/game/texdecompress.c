@@ -584,14 +584,10 @@ s32 texShrinkPaletted(u8 *src, u8 *dst, s32 srcwidth, s32 srcheight, s32 format,
 			nextrow = i + 1 < srcheight ? srcwidth >> 1 : 0;
 
 			for (j = 0; j < srcwidth; j += 4) {
-				// @bug: The brackets are wrong in colour2 and colour4 which
-				// causes the index shift to be part of the ternary condition.
-				// It's done correctly in TEXFORMAT_RGBA16_CI4 (above).
-				// This buggy calculation is repeated further below.
 				colour1 = palette[(src8[j >> 1] >> 4) & 0xf];
-				colour2 = palette[(src8[j >> 1] >> (j + 1 < srcwidth) ? 0 : 4) & 0xf];
+				colour2 = palette[src8[j >> 1] >> ((j + 1 < srcwidth) ? 0 : 4) & 0xf];
 				colour3 = palette[(src8[nextrow + (j >> 1)] >> 4) & 0xf];
-				colour4 = palette[(src8[nextrow + (j >> 1)] >> (j + 1 < srcwidth) ? 0 : 4) & 0xf];
+				colour4 = palette[src8[nextrow + (j >> 1)] >> ((j + 1 < srcwidth) ? 0 : 4) & 0xf];
 
 				c = ((((colour1 >> 8) & 0xff) + ((colour2 >> 8) & 0xff) + ((colour3 >> 8) & 0xff) + ((colour4 >> 8) & 0xff)) >> 2) & 0xff;
 				a = ((((colour1 >> 0) & 0xff) + ((colour2 >> 0) & 0xff) + ((colour3 >> 0) & 0xff) + ((colour4 >> 0) & 0xff) + 1) >> 2) & 0xff;
@@ -599,9 +595,9 @@ s32 texShrinkPaletted(u8 *src, u8 *dst, s32 srcwidth, s32 srcheight, s32 format,
 				dst8[j >> 2] = texFindClosestColourIndexIA(palette, numcolours, c, a) << 4;
 
 				colour1 = palette[(src8[(j + 2) >> 1] >> 4) & 0xf];
-				colour2 = palette[(src8[(j + 2) >> 1] >> (j + 3 < srcwidth) ? 0 : 4) & 0xf];
+				colour2 = palette[(src8[(j + 2) >> 1] >> (j + 3 < srcwidth ? 0 : 4)) & 0xf];
 				colour3 = palette[(src8[nextrow + ((j + 2) >> 1)] >> 4) & 0xf];
-				colour4 = palette[(src8[nextrow + ((j + 2) >> 1)] >> (j + 3 < srcwidth) ? 0 : 4) & 0xf];
+				colour4 = palette[(src8[nextrow + ((j + 2) >> 1)] >> (j + 3 < srcwidth ? 0 : 4)) & 0xf];
 
 				c = ((((colour1 >> 8) & 0xff) + ((colour2 >> 8) & 0xff) + ((colour3 >> 8) & 0xff) + ((colour4 >> 8) & 0xff)) >> 2) & 0xff;
 				a = ((((colour1 >> 0) & 0xff) + ((colour2 >> 0) & 0xff) + ((colour3 >> 0) & 0xff) + ((colour4 >> 0) & 0xff) + 1) >> 2) & 0xff;
