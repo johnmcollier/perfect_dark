@@ -204,6 +204,8 @@
 #define G_RDPFLUSH_EXT               0x43
 #define G_CLEAR_DEPTH_EXT            0x44
 #define G_SETSUBPIXELOFFSET_EXT      0x45
+#define G_LOADTLUT2                  0x46
+#define G_SETTEXINFO_EXT             0x47
 
 /* G_EXTRAGEOMETRYMODE flags */
 
@@ -219,6 +221,13 @@
 /* Extra texture filtering mode */
 
 #define G_TF_BLUR_EXT (1 << G_MDSFT_TEXTFILT)
+
+/* Texture Info Types */
+
+#define G_TEXTYPE_NONE        0x00
+#define G_TEXTYPE_GENERAL     0x01
+#define G_TEXTYPE_FONT        0x02
+#define G_TEXTYPE_MODEL       0x03
 
 /* Extended command macros */
 
@@ -331,5 +340,22 @@
 #define gSPTextureRectangleEXT gSPTextureRectangle
 
 #endif // PLATFORM_N64
+
+#define gSetTexInfoEXT(pkt, cmd, type, id1, id0)                \
+{                                                               \
+    Gfx *_g = (Gfx *)(pkt);                                     \
+                                                                \
+    _g->words.w0 = _SHIFTL(cmd, 24, 8) | _SHIFTL(type, 0, 8);   \
+    _g->words.w1 = _SHIFTL(id1, 16, 16) | _SHIFTL(id0, 0, 16);  \
+}
+
+#define gsSetTexInfoEXT(cmd, type, id1, id0)     \
+{                                                \
+    _SHIFTL(cmd, 24, 8) | _SHIFTL(type, 0, 8),   \
+    _SHIFTL(id1, 16, 16) | _SHIFTL(id0, 0, 16)  \
+}
+
+#define gDPSetTextureInfoEXT(pkt, t, id1, id0) gSetTexInfoEXT(pkt, G_SETTEXINFO_EXT, t, id1, id0)
+#define gsDPSetTextureInfoEXT(t, id1, id0)     gsSetTexInfoEXT(G_SETTEXINFO_EXT, t, id0, id1)
 
 #endif

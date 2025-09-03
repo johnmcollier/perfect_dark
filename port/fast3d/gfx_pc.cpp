@@ -148,9 +148,9 @@ struct LoadedTexture {
     uint32_t full_image_line_size_bytes;
     uint32_t line_size_bytes;
     uint32_t tex_flags;
-	bool is_external;
 	uint32_t width;
 	uint32_t height;
+	uint64_t ext_key;
     struct RawTexMetadata raw_tex_metadata;
 };
 
@@ -163,7 +163,9 @@ static struct RDP {
         uint8_t siz;
         uint32_t width;
         uint32_t tex_flags;
-		bool is_external;
+		uint8_t type;
+		uint16_t id;
+		uint16_t texnum;
         struct RawTexMetadata raw_tex_metadata;
     } texture_to_load;
     struct {
@@ -571,7 +573,7 @@ void gfx_texture_cache_delete(const uint8_t* orig_addr) {
     }
 
     while (gfx_texture_cache.map.bucket_count() > 0) {
-        TextureCacheKey key = { orig_addr, { 0 }, 0, 0 }; // bucket index only depends on the address
+        TextureCacheKey key = { orig_addr, { 0 }, 0, 0, 0 }; // bucket index only depends on the address
         size_t bucket = gfx_texture_cache.map.bucket(key);
         bool again = false;
         for (auto it = gfx_texture_cache.map.begin(bucket); it != gfx_texture_cache.map.end(bucket); ++it) {
@@ -818,11 +820,17 @@ static void import_texture(int i, int tile, bool is_rect) {
     SUPPORT_CHECK(orig_addr);
 
     TextureCacheKey key;
-    if (fmt == G_IM_FMT_CI) {
-        key = { orig_addr, { rdp.palette_addrs[0], rdp.palette_addrs[1] }, fmt, siz, palette_index };
-    } else {
-        key = { orig_addr, {}, fmt, siz, palette_index };
-    }
+	uint8_t external = loaded_texture.ext_key >> 5*8;
+
+	if (!external) {
+		if (fmt == G_IM_FMT_CI) {
+			key = { orig_addr, {rdp.palette_addrs[0], rdp.palette_addrs[1]}, fmt, siz, palette_index, 0 };
+		} else {
+			key = { orig_addr, {}, fmt, siz, palette_index, 0 };
+		}
+	} else {
+		key = { 0, {}, 0, 0, 0, loaded_texture.ext_key };
+	}
 
     if (gfx_texture_cache_lookup(i, key)) {
         return;
@@ -1415,8 +1423,9 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, bo
             }
 
 			LoadedTexture &tex = rdp.loaded_texture[rdp.texture_tile[tile].tmem];
-			uint32_t tex_w = is_rect && !tex.is_external ? tex_width[t] : tex_width2[t];
-			uint32_t tex_h = is_rect && !tex.is_external ? tex_height[t] : tex_height2[t];
+			bool is_external = tex.ext_key >> 5*8;
+			uint32_t tex_w = is_rect && !is_external ? tex_width[t] : tex_width2[t];
+			uint32_t tex_h = is_rect && !is_external ? tex_height[t] : tex_height2[t];
 
 			buf_vbo[buf_vbo_len++] = u / tex_w;
 			buf_vbo[buf_vbo_len++] = v / tex_h;
@@ -1690,6 +1699,12 @@ static void gfx_dp_set_texture_image(uint32_t format, uint32_t size, uint32_t wi
     rdp.texture_to_load.siz = size;
     rdp.texture_to_load.width = width;
     rdp.texture_to_load.tex_flags = tex_flags;
+}
+
+static void gfx_dp_set_texture_info(uint8_t type, uint16_t id, uint16_t texnum) {
+	rdp.texture_to_load.type = type;
+	rdp.texture_to_load.texnum = texnum;
+	rdp.texture_to_load.id = id;
 }
 
 static void gfx_dp_set_tile(uint8_t fmt, uint32_t siz, uint32_t line, uint32_t tmem, uint8_t tile, uint32_t palette,
@@ -2275,12 +2290,22 @@ static void gfx_run_dl(Gfx* cmd) {
                 gfx_dp_set_texture_image(C0(21, 3), C0(19, 2), C0(0, 10), 0, seg_addr(cmd->words.w1));
                 break;
             }
-            case G_SETTIMG_FB_EXT:
-                gfx_flush();
-                gfx_rapi->select_texture_fb(cmd->words.w1);
-                rdp.textures_changed[0] = false;
-                rdp.textures_changed[1] = false;
+            case G_SETTEXINFO_EXT: {
+                gfx_dp_set_texture_info(C0(0, 8), C1(16, 16), C1(0, 16));
                 break;
+            }
+            case G_SETTIMG_FB_EXT: {
+				gfx_flush();
+				gfx_rapi->select_texture_fb(cmd->words.w1);
+				rdp.textures_changed[0] = false;
+				rdp.textures_changed[1] = false;
+
+				// clear the external tex key
+				const uint32_t tile = gfx_lod_tile_offset(0);
+				LoadedTexture &tex = rdp.loaded_texture[rdp.texture_tile[tile].tmem];
+				tex.ext_key = 0;
+				break;
+			}
             case G_SETGRAYSCALE_EXT:
                 rdp.grayscale = cmd->words.w1;
                 break;

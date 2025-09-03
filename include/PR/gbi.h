@@ -161,7 +161,6 @@
 #define G_RDPLOADSYNC     0xe6 /* -26 */
 #define G_TEXRECTFLIP     0xe5 /* -27 */
 #define G_TEXRECT         0xe4 /* -28 */
-#define G_LOADTLUT2       0x2f
 
 
 /*
