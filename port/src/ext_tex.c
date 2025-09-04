@@ -381,7 +381,7 @@ s32 extTexInit()
 		}
 
 		// is a directory
-		if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {
+		if (S_ISDIR(stbuf.st_mode)) {
 			// models
 			char s = name[0];
 			if (s == 'P' || s == 'C' || s == 'G') {
