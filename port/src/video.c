@@ -53,6 +53,7 @@ static displaymode *vidModes = &vidModeDefault;
 static s32 texFilter = FILTER_LINEAR;
 static s32 texFilter2D = true;
 static s32 texDetail = false;
+static s32 texExternal = false;
 
 static u32 dlcount = 0;
 static u32 frames = 0;
@@ -367,6 +368,11 @@ s32 videoGetDetailTextures(void)
 	return texDetail;
 }
 
+s32 videoGetExternalTextures(void)
+{
+	return texExternal;
+}
+
 void videoSetWindowOffset(s32 x, s32 y)
 {
 	gfx_current_game_window_viewport.x = x;
@@ -438,6 +444,12 @@ void videoSetDetailTextures(s32 detail)
 {
 	texDetail = !!detail;
 	gfx_detail_textures_enabled = (bool)texDetail;
+}
+
+void videoSetExternalTextures(s32 external)
+{
+	texExternal = !!external;
+	gfx_external_textures_enabled = (bool)texExternal;
 }
 
 s32 videoCreateFramebuffer(u32 w, u32 h, s32 upscale, s32 autoresize)

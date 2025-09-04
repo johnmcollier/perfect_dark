@@ -226,6 +226,7 @@ struct XYWidthHeight gfx_current_native_viewport;
 float gfx_current_native_aspect = 4.f / 3.f;
 bool gfx_framebuffers_enabled = true;
 bool gfx_detail_textures_enabled = true;
+bool gfx_external_textures_enabled = false;
 
 static bool game_renders_to_framebuffer;
 static int game_framebuffer;
@@ -253,8 +254,6 @@ struct FBInfo {
 static bool fbActive = 0;
 static std::map<int, FBInfo>::iterator active_fb;
 static std::map<int, FBInfo> framebuffers;
-
-bool gfx_extTexEnabled = false;
 
 static constexpr float clampf(const float x, const float min, const float max) {
     return (x < min) ? min : (x > max) ? max : x;
@@ -1841,7 +1840,7 @@ static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t
 	uint16_t id = tex_to_load.id;
 	uint16_t texnum = tex_to_load.texnum;
 
-	if (gfx_extTexEnabled && extTexExists(type, id, texnum)) {
+	if (gfx_external_textures_enabled && extTexExists(type, id, texnum)) {
 		TextureCacheKey key = {0, {}, 0, 0, 0, 0};
 		key.ext_key = make_key(1, type, id, texnum);
 		TextureCacheMap::iterator it = gfx_texture_cache.map.find(key);
