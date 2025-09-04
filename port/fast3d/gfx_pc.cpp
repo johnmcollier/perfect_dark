@@ -31,6 +31,10 @@
 #include "gfx_rendering_api.h"
 #include "gfx_screen_config.h"
 
+extern "C" {
+#include "ext_tex.h"
+}
+
 uintptr_t gfxFramebuffer;
 
 #define ALIGN(x, a) (((x) + (a - 1)) & ~(a - 1))
@@ -249,6 +253,8 @@ struct FBInfo {
 static bool fbActive = 0;
 static std::map<int, FBInfo>::iterator active_fb;
 static std::map<int, FBInfo> framebuffers;
+
+bool gfx_extTexEnabled = false;
 
 static constexpr float clampf(const float x, const float min, const float max) {
     return (x < min) ? min : (x > max) ? max : x;
@@ -1803,6 +1809,10 @@ static void gfx_dp_load_tlut2(uint32_t offset, uint32_t count) {
 	load_tlut(base, tile, count);
 }
 
+static inline uint64_t make_key(bool external, uint64_t type, uint16_t id, uint16_t texnum) {
+	return (uint64_t)external << 5*8 | type << 4*8 | id << 2*8 | texnum;
+}
+
 static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t dxt) {
     // SUPPORT_CHECK(tile == G_TX_LOADTILE);
     SUPPORT_CHECK(uls == 0);
@@ -1825,7 +1835,33 @@ static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t
     loaded_texture.full_image_line_size_bytes = size_bytes;
     loaded_texture.tex_flags = rdp.texture_to_load.tex_flags;
     loaded_texture.raw_tex_metadata = rdp.texture_to_load.raw_tex_metadata;
-    loaded_texture.addr = rdp.texture_to_load.addr;
+
+	auto& tex_to_load = rdp.texture_to_load;
+	uint8_t type = tex_to_load.type;
+	uint16_t id = tex_to_load.id;
+	uint16_t texnum = tex_to_load.texnum;
+
+	if (gfx_extTexEnabled && extTexExists(type, id, texnum)) {
+		TextureCacheKey key = {0, {}, 0, 0, 0, 0};
+		key.ext_key = make_key(1, type, id, texnum);
+		TextureCacheMap::iterator it = gfx_texture_cache.map.find(key);
+		if (it == gfx_texture_cache.map.end()) {
+			uint32_t width, height;
+			uint8_t* addr = extTexLoad(type, id, texnum, &width, &height);
+
+			// do a cache lookup to select the texture and add to the cache
+			gfx_texture_cache_lookup(0, key);
+			gfx_texture_cache_lookup(1, key);
+			gfx_rapi->upload_texture(addr, width, height);
+
+			loaded_texture.addr = addr;
+		}
+        loaded_texture.ext_key = key.ext_key;
+	}
+	else {
+		loaded_texture.addr = rdp.texture_to_load.addr;
+		loaded_texture.ext_key = make_key(0, type, id, texnum);
+	}
 
     rdp.textures_changed[0] = rdp.textures_changed[1] = true;
 }
