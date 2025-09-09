@@ -10,81 +10,31 @@
 #include "system.h"
 #include "fs.h"
 #include "data.h"
-
-// for models and font folders
-struct ExtTexEntry {
-	u16 id;
-	u8 name[32];
-};
-
-struct ExtTexEntry modelsWithEmbeddedTex[98] = {
-	{FILE_CA51GUARD, "Ca51guardZ" }, 					 {FILE_CDD_SHOCK, "Cdd_shockZ" },
-	{FILE_CELVIS, "CelvisZ" }, 						     {FILE_CTESTCHR, "CtestchrZ" },
-	{FILE_PA51GRATE, "Pa51grateZ" }, 					 {FILE_PAF1ESCAPEDOOR, "Paf1escapedoorZ" },
-	{FILE_PAF1_CARGODOOR, "Paf1_cargodoorZ" }, 			 {FILE_PAF1_DOORBIG2, "Paf1_doorbig2Z" },
-	{FILE_PAF1_LAMP, "Paf1_lampZ" }, 					 {FILE_PAF1_PHONE, "Paf1_phoneZ" },
-	{FILE_PAF1_TOILET, "Paf1_toiletZ" }, 				 {FILE_PAIRBASE_CHAIR2, "Pairbase_chair2Z" },
-	{FILE_PAIRBASE_TABLE2, "Pairbase_table2Z" }, 		 {FILE_PAIVILLADOOR1, "Paivilladoor1Z" },
-	{FILE_PAIVILLADOOR2A, "Paivilladoor2aZ" }, 			 {FILE_PAIVILLADOOR4, "Paivilladoor4Z" },
-	{FILE_PALASKADOOR_IN, "Palaskadoor_inZ" }, 			 {FILE_PALASKADOOR_OUT, "Palaskadoor_outZ" },
-	{FILE_PALDOOR_L, "Paldoor_lZ" }, 					 {FILE_PALDOOR_R, "Paldoor_rZ" },
-	{FILE_PAL_AIRLOCK, "Pal_airlockZ" }, 				 {FILE_PBODYARMOUR, "PbodyarmourZ" },
-	{FILE_PCARDLOCK, "PcardlockZ" }, 					 {FILE_PCASE, "PcaseZ" },
-	{FILE_PCETANBLUEGREENL, "PcetanbluegreenlZ" }, 		 {FILE_PCETANBLUEGREENR, "PcetanbluegreenrZ" },
-	{FILE_PCETANDOORSIDE, "PcetandoorsideZ" }, 			 {FILE_PCETANDOOR, "PcetandoorZ" },
-	{FILE_PCETANSMALLDOOR, "PcetansmalldoorZ" }, 		 {FILE_PCETANWINDOW1, "Pcetanwindow1Z" },
-	{FILE_PCETANWINDOW2, "Pcetanwindow2Z" }, 			 {FILE_PCETANWINDOW3, "Pcetanwindow3Z" },
-	{FILE_PCHRBRIEFCASE, "PchrbriefcaseZ" }, 			 {FILE_PCHREYESPY, "PchreyespyZ" },
-	{FILE_PCIDOOR1_REF, "Pcidoor1_refZ" }, 				 {FILE_PCI_CABINET, "Pci_cabinetZ" },
-	{FILE_PCI_CARR_DESK, "Pci_carr_deskZ" }, 			 {FILE_PCI_DESK, "Pci_deskZ" },
-	{FILE_PCI_F_CHAIR, "Pci_f_chairZ" }, 				 {FILE_PCI_F_SOFA, "Pci_f_sofaZ" },
-	{FILE_PCI_LOUNGER, "Pci_loungerZ" }, 				 {FILE_PCI_TABLE, "Pci_tableZ" },
-	{FILE_PCV_CHAIR2, "Pcv_chair2Z" }, 					 {FILE_PCV_LAMP, "Pcv_lampZ" },
-	{FILE_PCV_TABLE, "Pcv_tableZ" }, 					 {FILE_PDD_EAR_CHAIR, "Pdd_ear_chairZ" },
-	{FILE_PDD_EAR_TABLE, "Pdd_ear_tableZ" }, 			 {FILE_PGOLDENEYELOGO, "PgoldeneyelogoZ" },
-	{FILE_PGROUNDGUN, "PgroundgunZ" }, 					 {FILE_PINSTFRONTDOOR, "PinstfrontdoorZ" },
-	{FILE_PKEYPADLOCK, "PkeypadlockZ" }, 				 {FILE_PKNOCKKNOCK, "PknockknockZ" },
-	{FILE_PMARKER, "PmarkerZ" }, 						 {FILE_PMISC_CRATE, "Pmisc_crateZ" },
-	{FILE_PMISC_IRSPECS, "Pmisc_irspecsZ" }, 			 {FILE_PNEWVILLADOOR, "PnewvilladoorZ" },
-	{FILE_PNINTENDOLOGO, "PnintendologoZ" }, 			 {FILE_PNLOGO2, "Pnlogo2Z" },
-	{FILE_PNLOGO3, "Pnlogo3Z" }, 						 {FILE_PNLOGO, "PnlogoZ" },
-	{FILE_PPDFOUR, "PpdfourZ" }, 						 {FILE_PPDMENU, "PpdmenuZ" },
-	{FILE_PPDONE, "PpdoneZ" }, 						     {FILE_PPDTHREE, "PpdthreeZ" },
-	{FILE_PPDTWO, "PpdtwoZ" }, 						     {FILE_PPEL_CHAIR1, "Ppel_chair1Z" },
-	{FILE_PPERFECTDARK, "PperfectdarkZ" }, 				 {FILE_PPOWERNODE, "PpowernodeZ" },
-	{FILE_PRARELOGO, "PrarelogoZ" }, 					 {FILE_PRETINALOCK, "PretinalockZ" },
-	{FILE_PROOFGUN, "ProofgunZ" }, 						 {FILE_PSECRETINDOOR, "PsecretindoorZ" },
-	{FILE_PSHUTTLEDOOR, "PshuttledoorZ" }, 				 {FILE_PSKEDARBRIDGE, "PskedarbridgeZ" },
-	{FILE_PSKEDARCONSOLEPANEL, "PskedarconsolepanelZ" }, {FILE_PSKEDARCONSOLE, "PskedarconsoleZ" },
-	{FILE_PSKPUZZLEOBJECT, "PskpuzzleobjectZ" }, 		 {FILE_PSK_CONSOLE2, "Psk_console2Z" },
-	{FILE_PSK_CRYOPOD1_BOT, "Psk_cryopod1_botZ" }, 		 {FILE_PSK_CRYOPOD1_TOP, "Psk_cryopod1_topZ" },
-	{FILE_PSK_FIGHTER1, "Psk_fighter1Z" }, 				 {FILE_PSK_HANGARDOORB_BOT, "Psk_hangardoorb_botZ" },
-	{FILE_PSK_HANGARDOORB_TOP, "Psk_hangardoorb_topZ" }, {FILE_PSK_HANGARDOOR_BOT, "Psk_hangardoor_botZ" },
-	{FILE_PSK_HANGARDOOR_TOP, "Psk_hangardoor_topZ" }, 	 {FILE_PSK_SHIP_DOOR2, "Psk_ship_door2Z" },
-	{FILE_PSK_UNDER_GENERATOR, "Psk_under_generatorZ" }, {FILE_PSK_UNDER_TRANS, "Psk_under_transZ" },
-	{FILE_PSTEWARDESS_TROLLEY, "Pstewardess_trolleyZ" }, {FILE_PTESTOBJ, "PtestobjZ" },
-	{FILE_PTHUMBPRINTSCANNER, "PthumbprintscannerZ" }, 	 {FILE_PWEAPONCDOOR, "PweaponcdoorZ" },
-	{FILE_GCARTBLUE, "GcartblueZ" }, 					 {FILE_GCARTRIDGE, "GcartridgeZ" },
-	{FILE_GCARTRIFLE, "GcartrifleZ" }, 					 {FILE_GCARTSHELL, "GcartshellZ" },
-	{FILE_GIRSCANNER, "GirscannerZ" }, 					 {FILE_GJOYPAD, "GjoypadZ" }
-};
+#include "romdata.h"
 
 #define EXT_TEX_DIRNAME "/ext_tex"
 static char extTexPath[FS_MAXPATH + 1];
 
 #define MAX_EXT_TEX 8192
-#define NUM_MODELS_EMBEDDED_TEX ARRAYCOUNT(modelsWithEmbeddedTex)
-#define NUM_EMBEDDED_TEX 481
 
 
 struct ExternalTex
 {
 	s16 texnum;
-	char extension[3];
+	char extension[5];
+};
+
+struct ModelTextures
+{
+	s16 fileNum;
+	s16 numTextures;
+	struct ExternalTex *textures;
 };
 
 static struct ExternalTex extTextures[MAX_EXT_TEX];
-static struct ExternalTex modelExtTextures[NUM_EMBEDDED_TEX];
+
+static struct ModelTextures *modelTextures;
+static s32 numModels;
 
 #if VERSION == VERSION_PAL_FINAL
 #define NCHARS 135
@@ -94,24 +44,13 @@ static struct ExternalTex modelExtTextures[NUM_EMBEDDED_TEX];
 
 static struct ExternalTex fontExtTextures[5][NCHARS];
 
-const u8 FONT_HANDELGOTHICSM = 0;
-const u8 FONT_HANDELGOTHICMD = 1;
-const u8 FONT_HANDELGOTHICXS = 2;
-const u8 FONT_HANDELGOTHICLG = 3;
-const u8 FONT_NUMERIC = 4;
+#define FONT_HANDELGOTHICSM 0
+#define FONT_HANDELGOTHICMD 1
+#define FONT_HANDELGOTHICXS 2
+#define FONT_HANDELGOTHICLG 3
+#define FONT_NUMERIC 4
 
-struct ExtTexEntry fonts[5] = {
-	{ FONT_HANDELGOTHICSM, "fonthandelgothicsm" },
-	{ FONT_HANDELGOTHICMD, "fonthandelgothicmd" },
-	{ FONT_HANDELGOTHICXS, "fonthandelgothicxs" },
-	{ FONT_HANDELGOTHICLG, "fonthandelgothiclg" },
-	{ FONT_NUMERIC,        "fontnumeric" }
-};
-
-s32 modelLookup[NUM_FILES] = { -1 };
-
-
-s32 fileInfo(const char *filename, s32 *texNum, char extension[3])
+s32 fileInfo(const char *filename, s16 *texNum, char extension[5])
 {
 	char *ext = strrchr(filename, '.');
 
@@ -119,14 +58,14 @@ s32 fileInfo(const char *filename, s32 *texNum, char extension[3])
 	if (!ext) return 1;
 
 	++ext;
-	extension[0] = ext[0];
-	extension[1] = ext[1];
-	extension[2] = ext[2];
+	strncpy(extension, ext, 5);
 
 	// get the filename without extension
 	char basename[16] = { 0 };
-	memcpy( basename, filename, strlen(filename) - strlen(ext) - 1);
+	memcpy(basename, filename, strlen(filename) - strlen(ext) - 1);
+
 	*texNum = strtol(basename, NULL, 16);
+
 	return 0;
 }
 
@@ -137,14 +76,20 @@ struct ExternalTex *lookupModelTex(u16 fileNum, u16 texNum)
 		return 0;
 	}
 
-	s16 key = modelLookup[fileNum];
-	u16 numTex = (key & 0xf000) >> 12;
-	u16 modelOffset = key & 0xfff;
+	struct ModelTextures *modelTex = NULL;
+	for (int i = 0; i < numModels; ++i) {
+		if (modelTextures[i].fileNum == fileNum) {
+			modelTex = &modelTextures[i];
+			break;
+		}
+	}
 
-	for (int i = 0; i < numTex; ++i) {
-		struct ExternalTex *modelTex = &modelExtTextures[modelOffset + i];
-		if (modelTex->texnum == texNum)
-			return modelTex;
+	if (modelTex == NULL)
+		return NULL;
+
+	for (int i = 0; i < modelTex->numTextures; ++i) {
+		if (modelTex->textures[i].texnum == texNum)
+			return &modelTex->textures[i];
 	}
 
 	return NULL;
@@ -172,78 +117,43 @@ u8 extTexExists(u8 type, u16 id, u16 texnum)
 	return texlist[texnum].texnum >= 0;
 }
 
-u8 *extLoadFontTex(u8 *fontname, s32 idx)
+char *resolveFontname(const u8 fontId)
 {
-	char path[FS_MAXPATH];
-	snprintf(path, FS_MAXPATH, "%s/%s/%02X.png", extTexPath, fontname, idx);
-
-	FILE *f = fopen(path, "rb");
-	if (!f) {
-		fclose(f);
-		return NULL;
+	switch (fontId) {
+		case FONT_HANDELGOTHICSM: return "fonthandelgothicsm";
+		case FONT_HANDELGOTHICMD: return "fonthandelgothicmd";
+		case FONT_HANDELGOTHICXS: return "fonthandelgothicxs";
+		case FONT_HANDELGOTHICLG: return "fonthandelgothiclg";
+		case FONT_NUMERIC: return "fontnumeric";
+		default: return "";
 	}
-
-	s32 width, height, channels;
-	u8 *data = stbi_load(path, &width, &height, &channels, 0);
-	fclose(f);
-	return data;
-}
-
-s32 getFileNum(const char *filename)
-{
-	for (int i = 0; i < NUM_MODELS_EMBEDDED_TEX; ++i) {
-		struct ExtTexEntry *item = &modelsWithEmbeddedTex[i];
-		if (strcmp(filename, item->name) == 0)
-			return item->id;
-	}
-
-	sysLogPrintf(LOG_WARNING, "ext_tex::getFileNum unable to resolve filenum for '%s'", filename);
-	return -1;
-}
-
-const char *getFileName(u16 fileNum)
-{
-	for (int i = 0; i < NUM_MODELS_EMBEDDED_TEX; ++i) {
-		struct ExtTexEntry *item = &modelsWithEmbeddedTex[i];
-		if (item->id == fileNum)
-			return item->name;
-	}
-
-	sysLogPrintf(LOG_WARNING, "ext_tex unable to resolve filename for %04x", fileNum);
-
-	return "";
 }
 
 u8 getTexPath(char *dst, u8 type, u16 id, u16 texnum)
 {
 	struct ExternalTex *tex;
-	char *e;
 	const char *name;
 
 	switch (type) {
 		case G_TEXTYPE_GENERAL: {
 			tex = &extTextures[texnum];
-			e = tex->extension;
-			snprintf(dst, FS_MAXPATH, "%s/%04x.%c%c%c", extTexPath, texnum, e[0], e[1], e[2]);
+			snprintf(dst, FS_MAXPATH, "%s/%04x.%s", extTexPath, texnum, tex->extension);
 			return 0;
 		}
 		case G_TEXTYPE_FONT: {
-			name = fonts[id].name;
+			name = resolveFontname(id);
 			tex = &fontExtTextures[id][texnum];
-			e = tex->extension;
-			snprintf(dst, FS_MAXPATH, "%s/%s/%02x.%c%c%c", extTexPath, name, texnum, e[0], e[1], e[2]);
+			snprintf(dst, FS_MAXPATH, "%s/%s/%02x.%s", extTexPath, name, texnum, tex->extension);
 			return 0;
 		}
 		case G_TEXTYPE_MODEL: {
-			name = getFileName(id);
+			name = romdataFileGetName(id);
 			tex = lookupModelTex(id, texnum);
-			e = tex->extension;
-			snprintf(dst, FS_MAXPATH, "%s/%s/%04x.%c%c%c", extTexPath, name, texnum, e[0], e[1], e[2]);
+			snprintf(dst, FS_MAXPATH, "%s/%s/%04x.%s", extTexPath, name, texnum, tex->extension);
 			return 0;
 		}
+		default: return 1;
 	}
-
-	return 1;
 }
 
 u8 *extTexLoad(u8 type, u16 id, u16 texnum, u32 *width, u32 *height)
@@ -290,41 +200,50 @@ u8 resolveFontID(const char *fontname)
 	return 0xff;
 }
 
-void setTex(struct ExternalTex *texlist, s32 index, u16 texNum, char extension[3])
+void setTex(struct ExternalTex *texlist, s32 index, s16 texNum, char extension[5])
 {
 	struct ExternalTex *tex = &texlist[index];
 	tex->texnum = texNum;
-	tex->extension[0] = extension[0];
-	tex->extension[1] = extension[1];
-	tex->extension[2] = extension[2];
+	strcpy(tex->extension, extension);
 }
 
-void readModelTextures(const char *path, u16 fileNum, s32 *modelOffset)
+void readModelTextures(const char *path, s16 fileNum, s32 *modelOffset, struct ModelTextures *modelTex)
 {
 	DIR *dr = opendir(path);
 	struct dirent *de;
 
-	s32 numTex = 0;
-	char extension[3] = { 0 };
+	s32 MAX_TEX = 16;
+	modelTex->textures = sysMemAlloc(MAX_TEX * sizeof(struct ExternalTex));
+	modelTex->numTextures = 0;
+	modelTex->fileNum = fileNum;
+
+	char extension[5] = { 0 };
+
 	while ((de = readdir(dr)) != NULL) {
 		const char *name = de->d_name;
 		if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) continue;
 
-		s32 texNum;
+		s16 texNum;
 		s32 err = fileInfo(name, &texNum, extension);
 		// no extension: skip
 		if (err) continue;
 
-		setTex(modelExtTextures, *modelOffset + numTex, texNum, extension);
-		numTex++;
+		setTex(modelTex->textures, modelTex->numTextures, texNum, extension);
+		modelTex->numTextures++;
+
+		// allocate more memory for model textures if needed
+		if (modelTex->numTextures > MAX_TEX) {
+			MAX_TEX *= 2;
+			modelTex->textures = sysMemRealloc(modelTex->textures, MAX_TEX * sizeof(struct ExternalTex));
+		}
 	}
 	closedir(dr);
 
-	if (numTex > 0) {
-		u16 key = (numTex << 12) | *modelOffset;
-		modelLookup[fileNum] = key;
-		*modelOffset += numTex;
-	}
+	// shrink the textures array to the actual number of textures found
+	s32 numTex = modelTex->numTextures;
+
+	if (numTex > 0)
+		modelTex->textures = sysMemRealloc(modelTex->textures, numTex * sizeof(struct ExternalTex));
 }
 
 void readFontTextures(const char *path, const char *fontName)
@@ -333,12 +252,12 @@ void readFontTextures(const char *path, const char *fontName)
 	struct dirent *de;
 
 	u8 fontID = resolveFontID(fontName);
-	char extension[3] = { 0 };
+	char extension[5] = { 0 };
 	while ((de = readdir(dr)) != NULL) {
 		const char *name = de->d_name;
 		if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) continue;
 
-		s32 texNum;
+		s16 texNum;
 		s32 err = fileInfo(name, &texNum, extension);
 		// no extension: skip
 		if (err) continue;
@@ -367,8 +286,10 @@ s32 extTexInit()
 	char filepath[FS_MAXPATH];
 	s32 modelOffset = 0;
 
-	char extension[3] = { 0 };
-	s32 texNum = 0;
+	s32 MAX_MODELS = 16;
+	numModels = 0;
+	modelTextures = sysMemAlloc(MAX_MODELS * sizeof(struct ModelTextures));
+
 	while ((de = readdir(dr)) != NULL) {
 		const char *name = de->d_name;
 		if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) continue;
@@ -376,7 +297,7 @@ s32 extTexInit()
 		struct stat stbuf;
 		sprintf(filepath , "%s/%s", extTexPath, de->d_name);
 		if (stat(filepath, &stbuf) == -1) {
-			sysLogPrintf(LOG_NOTE, "Unable to stat file: %s\n", filepath);
+			sysLogPrintf(LOG_WARNING, "Unable to stat file: %s\n", filepath);
 			continue;
 		}
 
@@ -385,16 +306,29 @@ s32 extTexInit()
 			// models
 			char s = name[0];
 			if (s == 'P' || s == 'C' || s == 'G') {
-				s32 fileNum = getFileNum(name);
-				if (fileNum < 0) continue;
-				modelLookup[fileNum] = modelOffset;
-				readModelTextures(filepath, fileNum, &modelOffset);
+				s16 fileNum = (s16)romdataFileGetNumForName(name);
+				if (fileNum < 0) {
+					sysLogPrintf(LOG_WARNING, "extTexInit invalid file: %s\n", name);
+					continue;
+				}
+
+				struct ModelTextures *modelTex = &modelTextures[numModels++];
+				readModelTextures(filepath, fileNum, &modelOffset, modelTex);
+
+				// allocate more memory if necessary
+				if (numModels > MAX_MODELS) {
+					MAX_MODELS *= 2;
+					modelTextures = sysMemRealloc(modelTextures, MAX_MODELS);
+				}
+
 			}
 			// fonts
 			else if (s == 'f') {
 				readFontTextures(filepath, name);
 			}
 		} else {
+			s16 texNum = 0;
+			char extension[5] = { 0 };
 			s32 err = fileInfo(name, &texNum, extension);
 
 			// no extension: skip
@@ -405,5 +339,10 @@ s32 extTexInit()
 	}
 
 	closedir(dr);
+
+	// shrink this array to the actual number of model folders found
+	if (numModels > 0)
+		modelTextures = sysMemRealloc(modelTextures, numModels * sizeof(struct ModelTextures));
+
 	return 0;
 }
