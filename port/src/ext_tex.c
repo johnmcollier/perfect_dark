@@ -149,7 +149,7 @@ u8 getTexPath(char *dst, u8 type, u16 id, u16 texnum)
 		case G_TEXTYPE_MODEL: {
 			name = romdataFileGetName(id);
 			tex = lookupModelTex(id, texnum);
-			snprintf(dst, FS_MAXPATH, "%s/%s/%04x.%s", extTexPath, name, texnum, tex->extension);
+			snprintf(dst, FS_MAXPATH, "%s/%s/%05x.%s", extTexPath, name, texnum, tex->extension);
 			return 0;
 		}
 		default: return 1;

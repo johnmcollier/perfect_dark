@@ -2324,7 +2324,7 @@ static void gfx_run_dl(Gfx* cmd) {
                 break;
             }
             case G_SETTEXINFO_EXT: {
-                gfx_dp_set_texture_info(C0(0, 8), C1(16, 16), C1(0, 16));
+                gfx_dp_set_texture_info(C0(0, 8), C1(20, 12), C1(0, 20));
                 break;
             }
             case G_SETTIMG_FB_EXT: {

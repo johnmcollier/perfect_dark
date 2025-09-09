@@ -346,13 +346,13 @@
     Gfx *_g = (Gfx *)(pkt);                                     \
                                                                 \
     _g->words.w0 = _SHIFTL(cmd, 24, 8) | _SHIFTL(type, 0, 8);   \
-    _g->words.w1 = _SHIFTL(id1, 16, 16) | _SHIFTL(id0, 0, 16);  \
+    _g->words.w1 = _SHIFTL(id1, 20, 12) | _SHIFTL(id0, 0, 20);  \
 }
 
 #define gsSetTexInfoEXT(cmd, type, id1, id0)     \
 {                                                \
     _SHIFTL(cmd, 24, 8) | _SHIFTL(type, 0, 8),   \
-    _SHIFTL(id1, 16, 16) | _SHIFTL(id0, 0, 16)  \
+    _SHIFTL(id1, 20, 12) | _SHIFTL(id0, 0, 20)  \
 }
 
 #define gDPSetTextureInfoEXT(pkt, t, id1, id0) gSetTexInfoEXT(pkt, G_SETTEXINFO_EXT, t, id1, id0)
