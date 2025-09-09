@@ -1427,10 +1427,8 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx, bo
                 }
             }
 
-			LoadedTexture &tex = rdp.loaded_texture[rdp.texture_tile[tile].tmem];
-			bool is_external = tex.ext_key >> 5*8;
-			uint32_t tex_w = is_rect && !is_external ? tex_width[t] : tex_width2[t];
-			uint32_t tex_h = is_rect && !is_external ? tex_height[t] : tex_height2[t];
+			uint32_t tex_w = is_rect ? tex_width[t] : tex_width2[t];
+			uint32_t tex_h = is_rect ? tex_height[t] : tex_height2[t];
 
 			buf_vbo[buf_vbo_len++] = u / tex_w;
 			buf_vbo[buf_vbo_len++] = v / tex_h;
