@@ -18,7 +18,7 @@ static char extTexPath[FS_MAXPATH + 1];
 #define MAX_EXT_TEX 8192
 
 
-struct ExternalTex
+struct ExtTexture
 {
 	s16 texnum;
 	char extension[5];
@@ -28,10 +28,10 @@ struct ModelTextures
 {
 	s16 fileNum;
 	s16 numTextures;
-	struct ExternalTex *textures;
+	struct ExtTexture *textures;
 };
 
-static struct ExternalTex extTextures[MAX_EXT_TEX];
+static struct ExtTexture extTextures[MAX_EXT_TEX];
 
 static struct ModelTextures *modelTextures;
 static s32 numModels;
@@ -42,7 +42,7 @@ static s32 numModels;
 #define NCHARS 94
 #endif
 
-static struct ExternalTex fontExtTextures[5][NCHARS];
+static struct ExtTexture fontExtTextures[5][NCHARS];
 
 #define FONT_HANDELGOTHICSM 0
 #define FONT_HANDELGOTHICMD 1
@@ -69,7 +69,7 @@ s32 fileInfo(const char *filename, s16 *texNum, char extension[5])
 	return 0;
 }
 
-struct ExternalTex *lookupModelTex(u16 fileNum, u16 texNum)
+struct ExtTexture *lookupModelTex(u16 fileNum, u16 texNum)
 {
 	if (fileNum > NUM_FILES) {
 		sysLogPrintf(LOG_WARNING, "Invalid fileNum in lookupModelTex: %04x, texNum: %04x", fileNum, texNum);
@@ -97,7 +97,7 @@ struct ExternalTex *lookupModelTex(u16 fileNum, u16 texNum)
 
 u8 extTexExists(u8 type, u16 id, u16 texnum)
 {
-	struct ExternalTex *texlist;
+	struct ExtTexture *texlist;
 	switch (type) {
 		case G_TEXTYPE_NONE:
 			return false;
@@ -131,7 +131,7 @@ char *resolveFontname(const u8 fontId)
 
 u8 getTexPath(char *dst, u8 type, u16 id, u16 texnum)
 {
-	struct ExternalTex *tex;
+	struct ExtTexture *tex;
 	const char *name;
 
 	switch (type) {
@@ -200,9 +200,9 @@ u8 resolveFontID(const char *fontname)
 	return 0xff;
 }
 
-void setTex(struct ExternalTex *texlist, s32 index, s16 texNum, char extension[5])
+void setTex(struct ExtTexture *texlist, s32 index, s16 texNum, char extension[5])
 {
-	struct ExternalTex *tex = &texlist[index];
+	struct ExtTexture *tex = &texlist[index];
 	tex->texnum = texNum;
 	strcpy(tex->extension, extension);
 }
@@ -213,7 +213,7 @@ void readModelTextures(const char *path, s16 fileNum, s32 *modelOffset, struct M
 	struct dirent *de;
 
 	s32 MAX_TEX = 16;
-	modelTex->textures = sysMemAlloc(MAX_TEX * sizeof(struct ExternalTex));
+	modelTex->textures = sysMemAlloc(MAX_TEX * sizeof(struct ExtTexture));
 	modelTex->numTextures = 0;
 	modelTex->fileNum = fileNum;
 
@@ -234,7 +234,7 @@ void readModelTextures(const char *path, s16 fileNum, s32 *modelOffset, struct M
 		// allocate more memory for model textures if needed
 		if (modelTex->numTextures > MAX_TEX) {
 			MAX_TEX *= 2;
-			modelTex->textures = sysMemRealloc(modelTex->textures, MAX_TEX * sizeof(struct ExternalTex));
+			modelTex->textures = sysMemRealloc(modelTex->textures, MAX_TEX * sizeof(struct ExtTexture));
 		}
 	}
 	closedir(dr);
@@ -243,7 +243,7 @@ void readModelTextures(const char *path, s16 fileNum, s32 *modelOffset, struct M
 	s32 numTex = modelTex->numTextures;
 
 	if (numTex > 0)
-		modelTex->textures = sysMemRealloc(modelTex->textures, numTex * sizeof(struct ExternalTex));
+		modelTex->textures = sysMemRealloc(modelTex->textures, numTex * sizeof(struct ExtTexture));
 }
 
 void readFontTextures(const char *path, const char *fontName)
