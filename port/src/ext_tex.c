@@ -12,7 +12,7 @@
 #include "data.h"
 #include "romdata.h"
 
-#define EXT_TEX_DIRNAME "/ext_tex"
+#define EXT_TEX_DIRNAME "ext_tex"
 static char extTexPath[FS_MAXPATH + 1];
 
 #define MAX_EXT_TEX 8192
@@ -268,7 +268,7 @@ void readFontTextures(const char *path, const char *fontName)
 
 s32 extTexInit()
 {
-	const char *path = fsFullPath("$B" EXT_TEX_DIRNAME);
+	const char *path = fsFullPath(EXT_TEX_DIRNAME);
 	strcpy(extTexPath, path);
 
 	for (int i = 0; i < MAX_EXT_TEX; ++i) {
