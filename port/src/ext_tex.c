@@ -21,7 +21,7 @@ static char extTexPath[FS_MAXPATH + 1];
 struct ExtTexture
 {
 	u8 *texdata;
-	s16 texnum;
+	s32 texnum;
 	char extension[5];
 };
 
@@ -51,7 +51,7 @@ static struct ExtTexture fontExtTextures[5][NCHARS];
 #define FONT_HANDELGOTHICLG 3
 #define FONT_NUMERIC 4
 
-s32 fileInfo(const char *filename, s16 *texNum, char extension[5])
+s32 fileInfo(const char *filename, s32 *texNum, char extension[5])
 {
 	char *ext = strrchr(filename, '.');
 
@@ -70,7 +70,7 @@ s32 fileInfo(const char *filename, s16 *texNum, char extension[5])
 	return 0;
 }
 
-struct ExtTexture *lookupModelTex(u16 fileNum, u16 texNum)
+struct ExtTexture *lookupModelTex(u16 fileNum, s32 texNum)
 {
 	if (fileNum > NUM_FILES) {
 		sysLogPrintf(LOG_WARNING, "Invalid fileNum in lookupModelTex: %04x, texNum: %04x", fileNum, texNum);
@@ -96,7 +96,7 @@ struct ExtTexture *lookupModelTex(u16 fileNum, u16 texNum)
 	return NULL;
 }
 
-struct ExtTexture *getExtTexture(u8 type, u16 id, u16 texnum)
+struct ExtTexture *getExtTexture(u8 type, u16 id, s32 texnum)
 {
 	struct ExtTexture *texlist;
 	switch (type) {
@@ -114,7 +114,7 @@ struct ExtTexture *getExtTexture(u8 type, u16 id, u16 texnum)
 	}
 }
 
-u8 extTexExists(u8 type, u16 id, u16 texnum)
+u8 extTexExists(u8 type, u16 id, s32 texnum)
 {
 	struct ExtTexture *tex = getExtTexture(type, id, texnum);
 	return tex && tex->texnum >= 0;
@@ -132,7 +132,7 @@ char *resolveFontname(const u8 fontId)
 	}
 }
 
-u8 getTexPath(char *dst, u8 type, u16 id, u16 texnum)
+u8 getTexPath(char *dst, u8 type, u16 id, s32 texnum)
 {
 	struct ExtTexture *tex;
 	const char *name;
@@ -159,7 +159,7 @@ u8 getTexPath(char *dst, u8 type, u16 id, u16 texnum)
 	}
 }
 
-u8 *extTexLoad(u8 type, u16 id, u16 texnum, u32 *width, u32 *height)
+u8 *extTexLoad(u8 type, u16 id, s32 texnum, u32 *width, u32 *height)
 {
 	char path[FS_MAXPATH];
 	u8 err = getTexPath(path, type, id, texnum);
@@ -210,7 +210,7 @@ u8 resolveFontID(const char *fontname)
 	return 0xff;
 }
 
-void setTex(struct ExtTexture *texlist, s32 index, s16 texNum, char extension[5])
+void setTex(struct ExtTexture *texlist, s32 index, s32 texNum, char extension[5])
 {
 	struct ExtTexture *tex = &texlist[index];
 	tex->texnum = texNum;
@@ -233,7 +233,7 @@ void readModelTextures(const char *path, s16 fileNum, s32 *modelOffset, struct M
 		const char *name = de->d_name;
 		if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) continue;
 
-		s16 texNum;
+		s32 texNum;
 		s32 err = fileInfo(name, &texNum, extension);
 		// no extension: skip
 		if (err) continue;
@@ -271,7 +271,7 @@ void readFontTextures(const char *path, const char *fontName)
 		const char *name = de->d_name;
 		if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) continue;
 
-		s16 texNum;
+		s32 texNum;
 		s32 err = fileInfo(name, &texNum, extension);
 		// no extension: skip
 		if (err) continue;
@@ -373,7 +373,7 @@ s32 extTexInit()
 				readFontTextures(filepath, name);
 			}
 		} else {
-			s16 texNum = 0;
+			s32 texNum = 0;
 			char extension[5] = { 0 };
 			s32 err = fileInfo(name, &texNum, extension);
 

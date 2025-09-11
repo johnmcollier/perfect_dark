@@ -172,7 +172,7 @@ static struct RDP {
         uint32_t tex_flags;
 		uint8_t type;
 		uint16_t id;
-		uint16_t texnum;
+		uint32_t texnum;
         struct RawTexMetadata raw_tex_metadata;
     } texture_to_load;
     struct {
@@ -829,7 +829,7 @@ static void import_texture(int i, int tile, bool is_rect) {
     SUPPORT_CHECK(orig_addr);
 
     TextureCacheKey key;
-	uint8_t external = loaded_texture.ext_key >> 5*8;
+	uint8_t external = loaded_texture.ext_key >> 7*8;
 
 	if (!external) {
 		if (fmt == G_IM_FMT_CI) {
@@ -1720,7 +1720,7 @@ static void gfx_dp_set_texture_image(uint32_t format, uint32_t size, uint32_t wi
     rdp.texture_to_load.tex_flags = tex_flags;
 }
 
-static void gfx_dp_set_texture_info(uint8_t type, uint16_t id, uint16_t texnum) {
+static void gfx_dp_set_texture_info(uint8_t type, uint16_t id, uint32_t texnum) {
 	rdp.texture_to_load.type = type;
 	rdp.texture_to_load.texnum = texnum;
 	rdp.texture_to_load.id = id;
@@ -1822,8 +1822,8 @@ static void gfx_dp_load_tlut2(uint32_t offset, uint32_t count) {
 	load_tlut(base, tile, count);
 }
 
-static inline uint64_t make_key(bool external, uint64_t type, uint16_t id, uint16_t texnum) {
-	return (uint64_t)external << 5*8 | type << 4*8 | id << 2*8 | texnum;
+static inline uint64_t make_key(bool external, uint64_t type, uint64_t id, uint32_t texnum) {
+	return (uint64_t)external << 7*8 | type << 6*8 | id << 4*8 | texnum;
 }
 
 static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t lrs, uint32_t dxt) {
@@ -1852,7 +1852,7 @@ static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t
 	auto& tex_to_load = rdp.texture_to_load;
 	uint8_t type = tex_to_load.type;
 	uint16_t id = tex_to_load.id;
-	uint16_t texnum = tex_to_load.texnum;
+	uint32_t texnum = tex_to_load.texnum;
 
 	if (gfx_external_textures_enabled && extTexExists(type, id, texnum)) {
 		TextureCacheKey key = {0, {}, 0, 0, 0, 0};
