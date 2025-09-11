@@ -155,6 +155,9 @@ struct LoadedTexture {
 	uint32_t width;
 	uint32_t height;
 	uint64_t ext_key;
+	uint8_t type;
+	uint16_t id;
+	uint32_t texnum;
     struct RawTexMetadata raw_tex_metadata;
 };
 
@@ -526,6 +529,7 @@ void gfx_texture_cache_clear() {
     gfx_texture_cache.lru.clear();
     rdp.textures_changed[0] = rdp.textures_changed[1] = true;
     memset(rendering_state.textures, 0, sizeof(rendering_state.textures));
+	extTexFree();
 }
 
 static bool gfx_texture_cache_lookup(int i, const TextureCacheKey& key) {
@@ -840,6 +844,18 @@ static void import_texture(int i, int tile, bool is_rect) {
     if (gfx_texture_cache_lookup(i, key)) {
         return;
     }
+
+	if (external) {
+		uint8_t type = loaded_texture.type;
+		uint16_t id = loaded_texture.id;
+		uint32_t texnum = loaded_texture.texnum;
+
+		uint32_t width, height;
+
+		uint8_t *addr = extTexLoad(type, id, texnum, &width, &height);
+		gfx_rapi->upload_texture(addr, width, height);
+		return;
+	}
 
     if (fmt == G_IM_FMT_RGBA) {
         if (siz == G_IM_SIZ_16b) {
@@ -1841,18 +1857,10 @@ static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t
 	if (gfx_external_textures_enabled && extTexExists(type, id, texnum)) {
 		TextureCacheKey key = {0, {}, 0, 0, 0, 0};
 		key.ext_key = make_key(1, type, id, texnum);
-		TextureCacheMap::iterator it = gfx_texture_cache.map.find(key);
-		if (it == gfx_texture_cache.map.end()) {
-			uint32_t width, height;
-			uint8_t* addr = extTexLoad(type, id, texnum, &width, &height);
 
-			// do a cache lookup to select the texture and add to the cache
-			gfx_texture_cache_lookup(0, key);
-			gfx_texture_cache_lookup(1, key);
-			gfx_rapi->upload_texture(addr, width, height);
-
-			loaded_texture.addr = addr;
-		}
+		loaded_texture.type = type;
+		loaded_texture.id = id;
+		loaded_texture.texnum = texnum;
         loaded_texture.ext_key = key.ext_key;
 	}
 	else {

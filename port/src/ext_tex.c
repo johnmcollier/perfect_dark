@@ -20,6 +20,7 @@ static char extTexPath[FS_MAXPATH + 1];
 
 struct ExtTexture
 {
+	u8 *texdata;
 	s16 texnum;
 	char extension[5];
 };
@@ -95,26 +96,28 @@ struct ExtTexture *lookupModelTex(u16 fileNum, u16 texNum)
 	return NULL;
 }
 
-u8 extTexExists(u8 type, u16 id, u16 texnum)
+struct ExtTexture *getExtTexture(u8 type, u16 id, u16 texnum)
 {
 	struct ExtTexture *texlist;
 	switch (type) {
 		case G_TEXTYPE_NONE:
-			return false;
+			return NULL;
 		case G_TEXTYPE_GENERAL:
-			texlist = extTextures;
-			break;
+			return &extTextures[texnum];
 		case G_TEXTYPE_MODEL:
-			return lookupModelTex(id, texnum) != NULL;
+			return lookupModelTex(id, texnum);
 		case G_TEXTYPE_FONT:
-			texlist = fontExtTextures[id];
-			break;
+			return &fontExtTextures[id][texnum];
 		default:
 			sysLogPrintf(LOG_WARNING, "Invalid Texture type: %d, texnum: %04x", type, texnum);
-			return false;
+			return NULL;
 	}
+}
 
-	return texlist[texnum].texnum >= 0;
+u8 extTexExists(u8 type, u16 id, u16 texnum)
+{
+	struct ExtTexture *tex = getExtTexture(type, id, texnum);
+	return tex && tex->texnum >= 0;
 }
 
 char *resolveFontname(const u8 fontId)
@@ -165,8 +168,15 @@ u8 *extTexLoad(u8 type, u16 id, u16 texnum, u32 *width, u32 *height)
 		return 0;
 	}
 
-	u32 channels;
-	return stbi_load(path, width, height, &channels, 0);
+	struct ExtTexture *tex = getExtTexture(type, id, texnum);
+
+	if (tex) {
+		u32 channels;
+		tex->texdata = stbi_load(path, width, height, &channels, 0);
+		return tex->texdata;
+	}
+
+	return NULL;
 }
 
 u8 extTexFontID(struct font *font) {
@@ -244,6 +254,10 @@ void readModelTextures(const char *path, s16 fileNum, s32 *modelOffset, struct M
 
 	if (numTex > 0)
 		modelTex->textures = sysMemRealloc(modelTex->textures, numTex * sizeof(struct ExtTexture));
+
+	for (int i = 0; i < modelTex->numTextures; ++i) {
+		modelTex->textures[i].texdata = 0;
+	}
 }
 
 void readFontTextures(const char *path, const char *fontName)
@@ -266,6 +280,35 @@ void readFontTextures(const char *path, const char *fontName)
 	}
 }
 
+void extTexFree()
+{
+	for (int i = 0; i < MAX_EXT_TEX; ++i) {
+		if (extTextures[i].texdata)
+			stbi_image_free(extTextures[i].texdata);
+
+		extTextures[i].texdata = 0;
+	}
+
+	for (int i = 0; i < 5; ++i) {
+		for (int j = 0; j < NCHARS; ++j) {
+			if (fontExtTextures[i][j].texdata)
+				stbi_image_free(fontExtTextures[i][j].texdata);
+
+			fontExtTextures[i][j].texdata = 0;
+		}
+	}
+
+	for (int i = 0; i < numModels; ++i) {
+		struct ModelTextures *modelTex = &modelTextures[i];
+		for (int j = 0; j < modelTex->numTextures; ++j) {
+			if (modelTex->textures[j].texdata)
+				stbi_image_free(modelTex->textures[j].texdata);
+
+			modelTex->textures[j].texdata = 0;
+		}
+	}
+}
+
 s32 extTexInit()
 {
 	const char *path = fsFullPath(EXT_TEX_DIRNAME);
@@ -273,11 +316,14 @@ s32 extTexInit()
 
 	for (int i = 0; i < MAX_EXT_TEX; ++i) {
 		extTextures[i].texnum = -1;
+		extTextures[i].texdata = 0;
 	}
 
 	for (int i = 0; i < 5; ++i) {
-		for (int j = 0; j < NCHARS; ++j)
+		for (int j = 0; j < NCHARS; ++j) {
 			fontExtTextures[i][j].texnum = -1;
+			fontExtTextures[i][j].texdata = 0;
+		}
 	}
 
 	struct dirent *de;
