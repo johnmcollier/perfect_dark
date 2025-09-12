@@ -341,21 +341,23 @@
 
 #endif // PLATFORM_N64
 
-#define gSetTexInfoEXT(pkt, cmd, type, id1, id0)                \
-{                                                               \
-    Gfx *_g = (Gfx *)(pkt);                                     \
-                                                                \
-    _g->words.w0 = _SHIFTL(cmd, 24, 8) | _SHIFTL(type, 0, 8);   \
-    _g->words.w1 = _SHIFTL(id1, 20, 12) | _SHIFTL(id0, 0, 20);  \
+#define gSetTexInfoEXT(pkt, cmd, type, id, texnum, idmask)        \
+{                                                                 \
+    Gfx *_g = (Gfx *)(pkt);                                       \
+                                                                  \
+    _g->words.w0 = _SHIFTL(cmd, 24, 8) | _SHIFTL(idmask, 8, 8)    \
+		| _SHIFTL(type, 0, 8);                                    \
+    _g->words.w1 = _SHIFTL(id, 20, 12) | _SHIFTL(texnum, 0, 20);  \
 }
 
-#define gsSetTexInfoEXT(cmd, type, id1, id0)     \
-{                                                \
-    _SHIFTL(cmd, 24, 8) | _SHIFTL(type, 0, 8),   \
-    _SHIFTL(id1, 20, 12) | _SHIFTL(id0, 0, 20)  \
+#define gsSetTexInfoEXT(cmd, type, id, texnum, idmask) \
+{                                                      \
+    _SHIFTL(cmd, 24, 8) | _SHIFTL(idmask, 8, 8)        \
+		| _SHIFTL(type, 0, 8),                         \
+    _SHIFTL(id, 20, 12) | _SHIFTL(texnum, 0, 20)       \
 }
 
-#define gDPSetTextureInfoEXT(pkt, t, id1, id0) gSetTexInfoEXT(pkt, G_SETTEXINFO_EXT, t, id1, id0)
-#define gsDPSetTextureInfoEXT(t, id1, id0)     gsSetTexInfoEXT(G_SETTEXINFO_EXT, t, id0, id1)
+#define gDPSetTextureInfoEXT(pkt, type, id, texnum, idmask) gSetTexInfoEXT(pkt, G_SETTEXINFO_EXT, type, id, texnum, idmask)
+#define gsDPSetTextureInfoEXT(type, id, texnum, idmask)     gsSetTexInfoEXT(G_SETTEXINFO_EXT, type, id, texnum, idmask)
 
 #endif

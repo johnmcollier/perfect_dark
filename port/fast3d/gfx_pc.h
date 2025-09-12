@@ -26,6 +26,7 @@ struct TextureCacheKey {
     uint8_t fmt, siz;
     uint8_t palette_index;
     uint64_t ext_key;
+    uint16_t id_mask;
 
     bool operator==(const TextureCacheKey&) const noexcept = default;
 

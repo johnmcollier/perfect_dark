@@ -1352,12 +1352,12 @@ Gfx *explosionRender(struct prop *prop, Gfx *gdl, bool xlupass)
 		gSPColor(gdl++, osVirtualToPhysical(colours), 1);
 
 		for (i = 14; i >= 0; i--) {
-			gDPSetTextureInfoEXT(gdl++, G_TEXTYPE_GENERAL, 0, g_TcExplosionTexturePairs[i].texturenum1);
+			gDPSetTextureInfoEXT(gdl++, G_TEXTYPE_GENERAL, 0, g_TcExplosionTexturePairs[i].texturenum1, 0);
 			gDPSetTextureImage(gdl++, G_IM_FMT_IA, G_IM_SIZ_16b, 1, g_ExplosionTexturePairs[i].texturenum1);
 			gDPLoadSync(gdl++);
 			gDPLoadBlock(gdl++, G_TX_LOADTILE, 0, 0, 1567, 0);
 
-			gDPSetTextureInfoEXT(gdl++, G_TEXTYPE_GENERAL, 0, g_TcExplosionTexturePairs[i].texturenum2);
+			gDPSetTextureInfoEXT(gdl++, G_TEXTYPE_GENERAL, 0, g_TcExplosionTexturePairs[i].texturenum2, 0);
 			gDPSetTextureImage(gdl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 1, g_ExplosionTexturePairs[i].texturenum2);
 			gDPLoadSync(gdl++);
 			gDPLoadBlock(gdl++, 5, 0, 0, 223, 0);

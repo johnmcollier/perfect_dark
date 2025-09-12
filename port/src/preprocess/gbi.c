@@ -188,7 +188,7 @@ u32 gbiConvertGdl(u8 *dst, u32 dstpos, u8 *src, u32 srcpos, u8 segment_cmds)
 
 		if (CMD_IS_SETTIMG(cmd) && cmd & 0x5000000) {
 			u16 texnum = cmd & 0xfffff;
-			gDPSetTextureInfoEXT(host_cmd, G_TEXTYPE_MODEL, loadingFileNum, texnum);
+			gDPSetTextureInfoEXT(host_cmd, G_TEXTYPE_MODEL, loadingFileNum, texnum, 0);
 			dstpos += sizeof(*host_cmd) * HOST_DWORDS_PER_CMD;
 			host_cmd += HOST_DWORDS_PER_CMD;
 		}

@@ -157,6 +157,7 @@ struct LoadedTexture {
 	uint64_t ext_key;
 	uint8_t type;
 	uint16_t id;
+	uint16_t id_mask;
 	uint32_t texnum;
     struct RawTexMetadata raw_tex_metadata;
 };
@@ -172,6 +173,7 @@ static struct RDP {
         uint32_t tex_flags;
 		uint8_t type;
 		uint16_t id;
+		uint16_t id_mask;
 		uint32_t texnum;
         struct RawTexMetadata raw_tex_metadata;
     } texture_to_load;
@@ -833,27 +835,29 @@ static void import_texture(int i, int tile, bool is_rect) {
 
 	if (!external) {
 		if (fmt == G_IM_FMT_CI) {
-			key = { orig_addr, {rdp.palette_addrs[0], rdp.palette_addrs[1]}, fmt, siz, palette_index, 0 };
+			key = { orig_addr, {rdp.palette_addrs[0], rdp.palette_addrs[1]}, fmt, siz, palette_index, 0, 0 };
 		} else {
-			key = { orig_addr, {}, fmt, siz, palette_index, 0 };
+			key = { orig_addr, {}, fmt, siz, palette_index, 0, 0 };
 		}
 	} else {
-		key = { 0, {}, 0, 0, 0, loaded_texture.ext_key };
+		key = { 0, {}, 0, 0, 0, loaded_texture.ext_key, loaded_texture.id_mask };
 	}
 
     if (gfx_texture_cache_lookup(i, key)) {
+        loaded_texture.id_mask = 0;
         return;
     }
 
 	if (external) {
 		uint8_t type = loaded_texture.type;
-		uint16_t id = loaded_texture.id;
+		uint16_t id = loaded_texture.id | loaded_texture.id_mask;
 		uint32_t texnum = loaded_texture.texnum;
 
 		uint32_t width, height;
 
 		uint8_t *addr = extTexLoad(type, id, texnum, &width, &height);
 		gfx_rapi->upload_texture(addr, width, height);
+		loaded_texture.id_mask = 0;
 		return;
 	}
 
@@ -1720,10 +1724,11 @@ static void gfx_dp_set_texture_image(uint32_t format, uint32_t size, uint32_t wi
     rdp.texture_to_load.tex_flags = tex_flags;
 }
 
-static void gfx_dp_set_texture_info(uint8_t type, uint16_t id, uint32_t texnum) {
+static void gfx_dp_set_texture_info(uint8_t type, uint8_t id_mask, uint16_t id, uint32_t texnum) {
 	rdp.texture_to_load.type = type;
 	rdp.texture_to_load.texnum = texnum;
 	rdp.texture_to_load.id = id;
+	rdp.texture_to_load.id_mask = id_mask << 8;
 }
 
 static void gfx_dp_set_tile(uint8_t fmt, uint32_t siz, uint32_t line, uint32_t tmem, uint8_t tile, uint32_t palette,
@@ -1852,16 +1857,20 @@ static void gfx_dp_load_block(uint8_t tile, uint32_t uls, uint32_t ult, uint32_t
 	auto& tex_to_load = rdp.texture_to_load;
 	uint8_t type = tex_to_load.type;
 	uint16_t id = tex_to_load.id;
+	uint16_t id_mask = tex_to_load.id_mask;
 	uint32_t texnum = tex_to_load.texnum;
 
 	if (gfx_external_textures_enabled && extTexExists(type, id, texnum)) {
-		TextureCacheKey key = {0, {}, 0, 0, 0, 0};
-		key.ext_key = make_key(1, type, id, texnum);
-
 		loaded_texture.type = type;
 		loaded_texture.id = id;
 		loaded_texture.texnum = texnum;
-        loaded_texture.ext_key = key.ext_key;
+		loaded_texture.id_mask = id_mask;
+        loaded_texture.ext_key = make_key(1, type, id, texnum);
+
+		// clear the masked id if can't find the texture associated with it
+		if (id_mask != 0 && !extTexExists(type, id | id_mask, texnum)) {
+			loaded_texture.id_mask = 0;
+		}
 	}
 	else {
 		loaded_texture.addr = rdp.texture_to_load.addr;
@@ -2332,7 +2341,7 @@ static void gfx_run_dl(Gfx* cmd) {
                 break;
             }
             case G_SETTEXINFO_EXT: {
-                gfx_dp_set_texture_info(C0(0, 8), C1(20, 12), C1(0, 20));
+                gfx_dp_set_texture_info(C0(0, 8), C0(8, 8), C1(20, 12), C1(0, 20));
                 break;
             }
             case G_SETTIMG_FB_EXT: {

@@ -387,7 +387,7 @@ void texSelect(Gfx **gdlptr, struct textureconfig *tconfig, u32 arg2, s32 arg3, 
 				}
 			}
 
-			gDPSetTextureInfoEXT(gdl++, G_TEXTYPE_GENERAL, 0, tex->texturenum);
+			gDPSetTextureInfoEXT(gdl++, G_TEXTYPE_GENERAL, 0, tex->texturenum, 0);
 			gDPSetTextureImage(gdl++, format, depth2, 1, tconfig->textureptr);
 
 			if (depth2 == G_IM_SIZ_16b) {
@@ -501,7 +501,7 @@ void texSelect(Gfx **gdlptr, struct textureconfig *tconfig, u32 arg2, s32 arg3, 
 				}
 			}
 
-			gDPSetTextureInfoEXT(gdl++, G_TEXTYPE_GENERAL, 0, tex->texturenum);
+			gDPSetTextureInfoEXT(gdl++, G_TEXTYPE_GENERAL, 0, tex->texturenum, 0);
 			gDPSetTextureImage(gdl++, format, depth2, 1, tconfig->textureptr);
 
 			if (depth2 == G_IM_SIZ_16b) {

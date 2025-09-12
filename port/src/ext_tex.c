@@ -11,11 +11,15 @@
 #include "fs.h"
 #include "data.h"
 #include "romdata.h"
+#include "ext_tex.h"
 
 #define EXT_TEX_DIRNAME "ext_tex"
+#define FONT_OUTLINES_DIR "outlines"
+
 static char extTexPath[FS_MAXPATH + 1];
 
 #define MAX_EXT_TEX 8192
+const u16 IDMASK_FONT_OUTLINE = MASK_FONT_OUTLINE << 8;
 
 
 struct ExtTexture
@@ -44,6 +48,7 @@ static s32 numModels;
 #endif
 
 static struct ExtTexture fontExtTextures[5][NCHARS];
+static struct ExtTexture fontOutlineExtTextures[5][NCHARS];
 
 #define FONT_HANDELGOTHICSM 0
 #define FONT_HANDELGOTHICMD 1
@@ -106,8 +111,12 @@ struct ExtTexture *getExtTexture(u8 type, u16 id, s32 texnum)
 			return &extTextures[texnum];
 		case G_TEXTYPE_MODEL:
 			return lookupModelTex(id, texnum);
-		case G_TEXTYPE_FONT:
+		case G_TEXTYPE_FONT: {
+			if (id & IDMASK_FONT_OUTLINE)
+				return &fontOutlineExtTextures[id & ~IDMASK_FONT_OUTLINE][texnum];
+
 			return &fontExtTextures[id][texnum];
+		}
 		default:
 			sysLogPrintf(LOG_WARNING, "Invalid Texture type: %d, texnum: %04x", type, texnum);
 			return NULL;
@@ -144,7 +153,14 @@ u8 getTexPath(char *dst, u8 type, u16 id, s32 texnum)
 			return 0;
 		}
 		case G_TEXTYPE_FONT: {
-			name = resolveFontname(id);
+			name = resolveFontname(id & ~IDMASK_FONT_OUTLINE);
+
+			if (id & IDMASK_FONT_OUTLINE) {
+				tex = &fontOutlineExtTextures[id & ~IDMASK_FONT_OUTLINE][texnum];
+				snprintf(dst, FS_MAXPATH, "%s/%s/" FONT_OUTLINES_DIR "/%02x.%s", extTexPath, name, texnum, tex->extension);
+				return 0;
+			}
+
 			tex = &fontExtTextures[id][texnum];
 			snprintf(dst, FS_MAXPATH, "%s/%s/%02x.%s", extTexPath, name, texnum, tex->extension);
 			return 0;
@@ -267,7 +283,25 @@ void readFontTextures(const char *path, const char *fontName)
 
 	u8 fontID = resolveFontID(fontName);
 	char extension[5] = { 0 };
-	while ((de = readdir(dr)) != NULL) {
+
+	char outlinesPath[FS_MAXPATH];
+	sprintf(outlinesPath , "%s/" FONT_OUTLINES_DIR, path);
+	u8 outlines = false;
+
+	while (true) {
+		de = readdir(dr);
+		// after done processing the font folder, do the same for the outlines folder if any
+		if (de == NULL) {
+			if (outlines) break;
+
+			outlines = true;
+			closedir(dr);
+			dr = opendir(outlinesPath);
+			de = readdir(dr);
+
+			if (de == NULL) break;
+		}
+
 		const char *name = de->d_name;
 		if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) continue;
 
@@ -276,8 +310,13 @@ void readFontTextures(const char *path, const char *fontName)
 		// no extension: skip
 		if (err) continue;
 
-		setTex(fontExtTextures[fontID], texNum, texNum, extension);
+		if (outlines)
+			setTex(fontOutlineExtTextures[fontID], texNum, texNum, extension);
+		else
+			setTex(fontExtTextures[fontID], texNum, texNum, extension);
 	}
+
+	closedir(dr);
 }
 
 void extTexFree()
@@ -294,7 +333,11 @@ void extTexFree()
 			if (fontExtTextures[i][j].texdata)
 				stbi_image_free(fontExtTextures[i][j].texdata);
 
+			if (fontOutlineExtTextures[i][j].texdata)
+				stbi_image_free(fontOutlineExtTextures[i][j].texdata);
+
 			fontExtTextures[i][j].texdata = 0;
+			fontOutlineExtTextures[i][j].texdata = 0;
 		}
 	}
 
@@ -323,6 +366,9 @@ s32 extTexInit()
 		for (int j = 0; j < NCHARS; ++j) {
 			fontExtTextures[i][j].texnum = -1;
 			fontExtTextures[i][j].texdata = 0;
+
+			fontOutlineExtTextures[i][j].texnum = -1;
+			fontOutlineExtTextures[i][j].texdata = 0;
 		}
 	}
 
