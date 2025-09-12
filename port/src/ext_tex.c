@@ -19,6 +19,7 @@
 static char extTexPath[FS_MAXPATH + 1];
 
 #define MAX_EXT_TEX 8192
+#define NUM_FONTS 5
 const u16 IDMASK_FONT_OUTLINE = MASK_FONT_OUTLINE << 8;
 
 
@@ -47,8 +48,8 @@ static s32 numModels;
 #define NCHARS 94
 #endif
 
-static struct ExtTexture fontExtTextures[5][NCHARS];
-static struct ExtTexture fontOutlineExtTextures[5][NCHARS];
+static struct ExtTexture fontExtTextures[NUM_FONTS][NCHARS];
+static struct ExtTexture fontOutlineExtTextures[NUM_FONTS][NCHARS];
 
 #define FONT_HANDELGOTHICSM 0
 #define FONT_HANDELGOTHICMD 1
@@ -328,7 +329,7 @@ void extTexFree()
 		extTextures[i].texdata = 0;
 	}
 
-	for (int i = 0; i < 5; ++i) {
+	for (int i = 0; i < NUM_FONTS; ++i) {
 		for (int j = 0; j < NCHARS; ++j) {
 			if (fontExtTextures[i][j].texdata)
 				stbi_image_free(fontExtTextures[i][j].texdata);
@@ -362,7 +363,7 @@ s32 extTexInit()
 		extTextures[i].texdata = 0;
 	}
 
-	for (int i = 0; i < 5; ++i) {
+	for (int i = 0; i < NUM_FONTS; ++i) {
 		for (int j = 0; j < NCHARS; ++j) {
 			fontExtTextures[i][j].texnum = -1;
 			fontExtTextures[i][j].texdata = 0;
