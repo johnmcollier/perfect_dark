@@ -849,6 +849,8 @@ static void import_texture(int i, int tile, bool is_rect) {
     }
 
 	if (external) {
+		loaded_texture.id_mask = 0;
+
 		uint8_t type = loaded_texture.type;
 		uint16_t id = loaded_texture.id | loaded_texture.id_mask;
 		uint32_t texnum = loaded_texture.texnum;
@@ -856,8 +858,17 @@ static void import_texture(int i, int tile, bool is_rect) {
 		uint32_t width, height;
 
 		uint8_t *addr = extTexLoad(type, id, texnum, &width, &height);
+		if (!addr) {
+			// upload a 1 pink pixel replacement for visual feedback
+			tex_upload_buffer[0] = 255;
+			tex_upload_buffer[1] = 0;
+			tex_upload_buffer[2] = 255;
+			tex_upload_buffer[3] = 255;
+			width = height = 1;
+			addr = tex_upload_buffer;
+		}
+
 		gfx_rapi->upload_texture(addr, width, height);
-		loaded_texture.id_mask = 0;
 		return;
 	}
 

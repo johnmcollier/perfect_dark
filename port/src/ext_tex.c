@@ -187,13 +187,14 @@ u8 *extTexLoad(u8 type, u16 id, s32 texnum, u32 *width, u32 *height)
 
 	struct ExtTexture *tex = getExtTexture(type, id, texnum);
 
-	if (tex) {
-		u32 channels;
-		tex->texdata = stbi_load(path, width, height, &channels, 0);
-		return tex->texdata;
+	if (!tex) {
+		sysLogPrintf(LOG_WARNING, "Unable to load texture: %05x", texnum);
+		return NULL;
 	}
 
-	return NULL;
+	u32 channels;
+	tex->texdata = stbi_load(path, width, height, &channels, 4);
+	return tex->texdata;
 }
 
 u8 extTexFontID(struct font *font) {
