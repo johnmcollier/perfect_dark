@@ -849,8 +849,6 @@ static void import_texture(int i, int tile, bool is_rect) {
     }
 
 	if (external) {
-		loaded_texture.id_mask = 0;
-
 		uint8_t type = loaded_texture.type;
 		uint16_t id = loaded_texture.id | loaded_texture.id_mask;
 		uint32_t texnum = loaded_texture.texnum;
@@ -867,6 +865,8 @@ static void import_texture(int i, int tile, bool is_rect) {
 			width = height = 1;
 			addr = tex_upload_buffer;
 		}
+
+		loaded_texture.id_mask = 0;
 
 		gfx_rapi->upload_texture(addr, width, height);
 		return;
