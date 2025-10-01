@@ -1567,7 +1567,7 @@ struct menudialogdef g_CheatsBuddiesMenuDialog = {
 };
 
 struct menuitem g_ExtendedCheatsMenuItems[] = {
-	#ifndef PLATFORM_N64
+#ifndef PLATFORM_N64
 	{
 		MENUITEMTYPE_CHECKBOX,
 		CHEAT_DUALWIELDALLGUNS,
@@ -1576,8 +1576,6 @@ struct menuitem g_ExtendedCheatsMenuItems[] = {
 		0,
 		cheatCheckboxMenuHandler,
 	},
-#if (VERSION == VERSION_NTSC_1_0) || (VERSION == VERSION_NTSC_FINAL)
-// Only enable "All Doors Unlocked" cheat on NTSC 1.0 or final, as the cheat text is not localized
 	{
 		MENUITEMTYPE_CHECKBOX,
 		CHEAT_ALLDOORSUNLOCKED,
@@ -1586,7 +1584,6 @@ struct menuitem g_ExtendedCheatsMenuItems[] = {
 		0,
 		cheatCheckboxMenuHandler,
 	},
-#endif
 #endif
 	{
 		MENUITEMTYPE_SEPARATOR,
