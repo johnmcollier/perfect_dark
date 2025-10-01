@@ -1110,27 +1110,6 @@ struct menuitem g_CheatsGameplayMenuItems[] = {
 		0,
 		cheatCheckboxMenuHandler,
 	},
-#ifndef PLATFORM_N64
-	{
-		MENUITEMTYPE_CHECKBOX,
-		CHEAT_DUALWIELDALLGUNS,
-		0,
-		(uintptr_t)&cheatGetNameIfUnlocked,
-		0,
-		cheatCheckboxMenuHandler,
-	},
-#if (VERSION == VERSION_NTSC_1_0) || (VERSION == VERSION_NTSC_FINAL)
-// Only enable "All Doors Unlocked" cheat on NTSC 1.0 or final, as the cheat text is not localized
-	{
-		MENUITEMTYPE_CHECKBOX,
-		CHEAT_ALLDOORSUNLOCKED,
-		0,
-		(uintptr_t)&cheatGetNameIfUnlocked,
-		0,
-		cheatCheckboxMenuHandler,
-	},
-#endif
-#endif
 	{
 		MENUITEMTYPE_SEPARATOR,
 		0,
@@ -1584,6 +1563,72 @@ struct menudialogdef g_CheatsBuddiesMenuDialog = {
 	g_CheatsBuddiesMenuItems,
 	cheatMenuHandleDialog,
 	0,
+	NULL,
+};
+
+struct menuitem g_ExtendedCheatsMenuItems[] = {
+	#ifndef PLATFORM_N64
+	{
+		MENUITEMTYPE_CHECKBOX,
+		CHEAT_DUALWIELDALLGUNS,
+		0,
+		(uintptr_t)&cheatGetNameIfUnlocked,
+		0,
+		cheatCheckboxMenuHandler,
+	},
+#if (VERSION == VERSION_NTSC_1_0) || (VERSION == VERSION_NTSC_FINAL)
+// Only enable "All Doors Unlocked" cheat on NTSC 1.0 or final, as the cheat text is not localized
+	{
+		MENUITEMTYPE_CHECKBOX,
+		CHEAT_ALLDOORSUNLOCKED,
+		0,
+		(uintptr_t)&cheatGetNameIfUnlocked,
+		0,
+		cheatCheckboxMenuHandler,
+	},
+#endif
+#endif
+	{
+		MENUITEMTYPE_SEPARATOR,
+		0,
+		0,
+		0x00000096,
+		0,
+		NULL,
+	},
+	{
+		MENUITEMTYPE_MARQUEE,
+		0,
+		MENUITEMFLAG_SMALLFONT | MENUITEMFLAG_MARQUEE_FADEBOTHSIDES,
+		(uintptr_t)&cheatGetMarquee,
+		0,
+		NULL,
+	},
+	{
+		MENUITEMTYPE_SEPARATOR,
+		0,
+		0,
+		0x00000096,
+		0,
+		NULL,
+	},
+	{
+		MENUITEMTYPE_SELECTABLE,
+		0,
+		MENUITEMFLAG_SELECTABLE_CLOSESDIALOG | MENUITEMFLAG_SELECTABLE_CENTRE,
+		L_MPMENU_477, // "Done"
+		0,
+		NULL,
+	},
+	{ MENUITEMTYPE_END },
+};
+
+struct menudialogdef g_ExtendedCheatsMenuDialog = {
+	MENUDIALOGTYPE_DEFAULT,
+	(uintptr_t)"Extended Cheats",
+	g_ExtendedCheatsMenuItems,
+	NULL,
+	MENUDIALOGFLAG_LITERAL_TEXT,
 	NULL,
 };
 
