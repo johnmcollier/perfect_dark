@@ -514,6 +514,12 @@ char *cheatGetMarquee(struct menuitem *arg0)
 			&& g_Menus[g_MpPlayerNum].curdialog->focuseditem->type == MENUITEMTYPE_CHECKBOX) {
 		cheat_id = g_Menus[g_MpPlayerNum].curdialog->focuseditem->param;
 
+		if (cheat_id == CHEAT_ALLDOORSUNLOCKED) {
+			strcpy(cheatname, CHEAT_ALLDOORS_TEXT);
+		} else {
+			strcpy(cheatname, langGet(g_Cheats[cheat_id].nametextid));
+		}
+
 		if (g_Menus[g_MpPlayerNum].curdialog->definition == &g_CheatsBuddiesMenuDialog
 				&& g_Menus[g_MpPlayerNum].curdialog->focuseditem == &g_CheatsBuddiesMenuItems[0]) {
 			// Velvet
@@ -522,11 +528,10 @@ char *cheatGetMarquee(struct menuitem *arg0)
 			// Show cheat name
 			sprintf(g_CheatMarqueeString, "%s %s\n",
 					g_Menus[g_MpPlayerNum].curdialog->definition == &g_CheatsBuddiesMenuDialog ? langGet(L_MPWEAPONS_143) : langGet(L_MPWEAPONS_136), // "Buddy Available", "Cheat available"
-					langGet(g_Cheats[cheat_id].nametextid)
+					cheatname
 			);
 		} else {
 			// Locked
-			strcpy(cheatname, langGet(g_Cheats[cheat_id].nametextid));
 			ptr = cheatname;
 
 			while (*ptr != '\n') {
@@ -597,6 +602,12 @@ char *cheatGetMarquee(struct menuitem *arg0)
 			&& g_Menus[g_MpPlayerNum].curdialog->focuseditem->type == MENUITEMTYPE_CHECKBOX) {
 		cheat_id = g_Menus[g_MpPlayerNum].curdialog->focuseditem->param;
 
+		if (cheat_id == CHEAT_ALLDOORSUNLOCKED) {
+			strcpy(cheatname, CHEAT_ALLDOORS_TEXT);
+		} else {
+			strcpy(cheatname, langGet(g_Cheats[cheat_id].nametextid));
+		}
+
 		if (g_Menus[g_MpPlayerNum].curdialog->definition == &g_CheatsBuddiesMenuDialog
 				&& g_Menus[g_MpPlayerNum].curdialog->focuseditem == &g_CheatsBuddiesMenuItems[0]) {
 			// Velvet
@@ -605,11 +616,10 @@ char *cheatGetMarquee(struct menuitem *arg0)
 			// Show cheat name
 			sprintf(g_CheatMarqueeString, "%s: %s\n",
 					g_Menus[g_MpPlayerNum].curdialog->definition == &g_CheatsBuddiesMenuDialog ? langGet(L_MPWEAPONS_143) : langGet(L_MPWEAPONS_136), // "Buddy Available", "Cheat available"
-					langGet(g_Cheats[cheat_id].nametextid)
+					cheatname
 			);
 		} else {
 			// Locked
-			strcpy(cheatname, langGet(g_Cheats[cheat_id].nametextid));
 			ptr = cheatname;
 
 			while (*ptr != '\n') {
