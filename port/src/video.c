@@ -74,6 +74,7 @@ s32 videoInit(void)
 	gfx_current_native_aspect = 320.f / 220.f;
 	gfx_framebuffers_enabled = (bool)vidFramebuffers;
 	gfx_detail_textures_enabled = (bool)texDetail;
+	gfx_external_textures_enabled = (bool)texExternal;
 	gfx_msaa_level = vidMSAA;
 
 	struct GfxInitSettings set = {
@@ -543,4 +544,5 @@ PD_CONSTRUCTOR static void videoConfigInit(void)
 	configRegisterInt("Video.TextureFilter", &texFilter, 0, 2);
 	configRegisterInt("Video.TextureFilter2D", &texFilter2D, 0, 1);
 	configRegisterInt("Video.DetailTextures", &texDetail, 0, 1);
+	configRegisterInt("Video.ExternalTextures", &texExternal, 0, 1);
 }
