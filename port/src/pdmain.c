@@ -76,9 +76,15 @@
 #include "video.h"
 #include "input.h"
 
+extern bool g_DebugIsMenuOpen;
+extern bool g_DebugLaserFocus;
 extern u8 *g_MempHeap;
 extern u32 g_MempHeapSize;
 extern bool gfx_external_textures_enabled;
+extern bool g_DebugShowHud;
+
+
+extern bool g_DebugLaserFocus;
 
 void rngSetSeed(u32 seed);
 
@@ -534,6 +540,15 @@ void mainTick(void)
 			bool enabled = videoGetExternalTextures();
 			videoSetExternalTextures(!enabled);
 		}
+
+		if (inputKeyJustPressed(VK_F3)) {
+    g_DebugShowHud = !g_DebugShowHud;
+}
+
+		// Inside the input handling function:
+if (inputKeyJustPressed(VK_F4)) {
+    g_DebugLaserFocus = !g_DebugLaserFocus;
+}
 
 		frametimeCalculate();
 		profileReset();
