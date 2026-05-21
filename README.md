@@ -1,3 +1,5 @@
+I'm just adding some tools so I can identify textures and track down some missing ones easier for HD replacement work.
+
 # Perfect Dark port
 
 This repository contains a work-in-progress port of the [Perfect Dark decompilation](https://github.com/n64decomp/perfect_dark) to modern platforms.
