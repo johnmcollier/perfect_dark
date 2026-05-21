@@ -13,6 +13,18 @@
 #include "romdata.h"
 #include "ext_tex.h"
 
+#define MAX_DEBUG_TEX 128
+u16 debug_tex_id_list[MAX_DEBUG_TEX];
+u16 debug_tex_list[MAX_DEBUG_TEX];
+int debug_tex_count = 0;
+
+extern bool g_DebugIsMenuOpen; // <--- Now it just points to debug2.c
+bool g_DebugLaserFocus = false; // <--- Keep this one as is
+bool g_DebugShowHud = false; // For F3 toggle
+
+// Forward declaration
+void track_debug_tex(u16 id, s32 texnum);
+
 #define EXT_TEX_DIRNAME "ext_tex"
 #define FONT_OUTLINES_DIR "outlines"
 
@@ -104,14 +116,17 @@ struct ExtTexture *lookupModelTex(u16 fileNum, s32 texNum)
 
 struct ExtTexture *getExtTexture(u8 type, u16 id, s32 texnum)
 {
-	struct ExtTexture *texlist;
-	switch (type) {
-		case G_TEXTYPE_NONE:
-			return NULL;
-		case G_TEXTYPE_GENERAL:
-			return &extTextures[texnum];
-		case G_TEXTYPE_MODEL:
-			return lookupModelTex(id, texnum);
+    // Make sure we are tracking EVERY time the game asks for a texture
+    track_debug_tex(id, texnum);
+
+    struct ExtTexture *texlist;
+    switch (type) {
+        case G_TEXTYPE_NONE:
+            return NULL;
+        case G_TEXTYPE_GENERAL:
+            return &extTextures[texnum];
+        case G_TEXTYPE_MODEL:
+            return lookupModelTex(id, texnum);
 		case G_TEXTYPE_FONT: {
 			if (id & IDMASK_FONT_OUTLINE)
 				return &fontOutlineExtTextures[id & ~IDMASK_FONT_OUTLINE][texnum];
@@ -176,25 +191,39 @@ u8 getTexPath(char *dst, u8 type, u16 id, s32 texnum)
 	}
 }
 
+
+void track_debug_tex(u16 id, s32 texnum) {
+    if (debug_tex_count >= MAX_DEBUG_TEX) return;
+    for (int i = 0; i < debug_tex_count; i++) {
+        if (debug_tex_list[i] == (u16)texnum && debug_tex_id_list[i] == id) return;
+    }
+    debug_tex_id_list[debug_tex_count] = id;
+    debug_tex_list[debug_tex_count] = (u16)texnum;
+    debug_tex_count++;
+}
+
 u8 *extTexLoad(u8 type, u16 id, s32 texnum, u32 *width, u32 *height)
 {
-	char path[FS_MAXPATH];
-	u8 err = getTexPath(path, type, id, texnum);
-	if (err) {
-		sysLogPrintf(LOG_WARNING, "Invalid type in extTexLoad: %d, id: 04x, texnum: %04x", type, id, texnum);
-		return 0;
-	}
+    char path[FS_MAXPATH];
+    u8 err = getTexPath(path, type, id, texnum);
+    if (err) {
+        return 0;
+    }
 
-	struct ExtTexture *tex = getExtTexture(type, id, texnum);
+    struct ExtTexture *tex = getExtTexture(type, id, texnum);
 
-	if (!tex) {
-		sysLogPrintf(LOG_WARNING, "Unable to load texture: %05x", texnum);
-		return NULL;
-	}
+    if (!tex) {
+        return NULL;
+    }
 
-	u32 channels;
-	tex->texdata = stbi_load(path, width, height, &channels, 4);
-	return tex->texdata;
+    // Your Mac Flip Fix
+    #ifdef __APPLE__
+        stbi_set_flip_vertically_on_load(1);
+    #endif
+
+    u32 channels;
+    tex->texdata = stbi_load(path, width, height, &channels, 4);
+    return tex->texdata;
 }
 
 u8 extTexFontID(struct font *font) {
