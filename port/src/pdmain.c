@@ -81,10 +81,12 @@ extern bool g_DebugLaserFocus;
 extern u8 *g_MempHeap;
 extern u32 g_MempHeapSize;
 extern bool gfx_external_textures_enabled;
+
 extern bool g_DebugShowHud;
-
-
+extern bool g_DebugFreezeList;
 extern bool g_DebugLaserFocus;
+extern bool g_DebugFlatMode;
+extern int g_DebugMatrixMode; // Change this from bool to int
 
 void rngSetSeed(u32 seed);
 
@@ -548,6 +550,17 @@ void mainTick(void)
 		// Inside the input handling function:
 if (inputKeyJustPressed(VK_F4)) {
     g_DebugLaserFocus = !g_DebugLaserFocus;
+}
+
+if (inputKeyJustPressed(VK_F5)) g_DebugFreezeList = !g_DebugFreezeList;
+
+if (inputKeyJustPressed(VK_F6)) {
+    g_DebugMatrixMode = (g_DebugMatrixMode + 1) % 3;
+    printf("Matrix Mode set to: %d\n", g_DebugMatrixMode); // Prints to your terminal so you know what state you're in
+}
+
+if (inputKeyJustPressed(VK_F7)) {
+    g_DebugFlatMode = !g_DebugFlatMode;
 }
 
 		frametimeCalculate();
