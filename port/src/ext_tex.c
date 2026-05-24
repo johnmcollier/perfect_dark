@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <sys/stat.h>
+#include <stdlib.h> 
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "external/stb_image.h"
@@ -21,9 +22,14 @@ int debug_tex_count = 0;
 extern bool g_DebugIsMenuOpen; // <--- Now it just points to debug2.c
 bool g_DebugLaserFocus = false; // <--- Keep this one as is
 bool g_DebugShowHud = false; // For F3 toggle
+bool g_DebugFreezeList = false; // For F5 toggle
+bool g_DebugFlatMode = false;
 
-// Forward declaration
-void track_debug_tex(u16 id, s32 texnum);
+// At the top of the file:
+int g_DebugMatrixMode = 0; // 0 = Off, 1 = Missing Only, 2 = All
+
+// Update this line to match the new 3-argument version
+void track_debug_tex(u8 type, u16 id, s32 texnum);
 
 #define EXT_TEX_DIRNAME "ext_tex"
 #define FONT_OUTLINES_DIR "outlines"
@@ -34,6 +40,25 @@ static char extTexPath[FS_MAXPATH + 1];
 #define NUM_FONTS 5
 const u16 IDMASK_FONT_OUTLINE = MASK_FONT_OUTLINE << 8;
 
+// A tiny 3x5 pixel font for Hex Characters (0-9, A-F)
+static const u8 hex_font[16][15] = {
+    {1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1}, // 0
+    {0,1,0, 1,1,0, 0,1,0, 0,1,0, 1,1,1}, // 1
+    {1,1,1, 0,0,1, 1,1,1, 1,0,0, 1,1,1}, // 2
+    {1,1,1, 0,0,1, 1,1,1, 0,0,1, 1,1,1}, // 3
+    {1,0,1, 1,0,1, 1,1,1, 0,0,1, 0,0,1}, // 4
+    {1,1,1, 1,0,0, 1,1,1, 0,0,1, 1,1,1}, // 5
+    {1,1,1, 1,0,0, 1,1,1, 1,0,1, 1,1,1}, // 6
+    {1,1,1, 0,0,1, 0,1,0, 0,1,0, 0,1,0}, // 7
+    {1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,1,1}, // 8
+    {1,1,1, 1,0,1, 1,1,1, 0,0,1, 1,1,1}, // 9
+    {1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,0,1}, // A
+    {1,1,0, 1,0,1, 1,1,0, 1,0,1, 1,1,0}, // B
+    {1,1,1, 1,0,0, 1,0,0, 1,0,0, 1,1,1}, // C
+    {1,1,0, 1,0,1, 1,0,1, 1,0,1, 1,1,0}, // D
+    {1,1,1, 1,0,0, 1,1,0, 1,0,0, 1,1,1}, // E
+    {1,1,1, 1,0,0, 1,1,0, 1,0,0, 1,0,0}  // F
+};
 
 struct ExtTexture
 {
@@ -116,8 +141,7 @@ struct ExtTexture *lookupModelTex(u16 fileNum, s32 texNum)
 
 struct ExtTexture *getExtTexture(u8 type, u16 id, s32 texnum)
 {
-    // Make sure we are tracking EVERY time the game asks for a texture
-    track_debug_tex(id, texnum);
+    track_debug_tex(type, id, texnum); // Added 'type' here
 
     struct ExtTexture *texlist;
     switch (type) {
@@ -141,8 +165,15 @@ struct ExtTexture *getExtTexture(u8 type, u16 id, s32 texnum)
 
 u8 extTexExists(u8 type, u16 id, s32 texnum)
 {
-	struct ExtTexture *tex = getExtTexture(type, id, texnum);
-	return tex && tex->texnum >= 0;
+    // If ANY debug mode is active, we bypass and return 1.
+    // This allows extTexLoad to dynamically decide whether to load your HD art or generate a debug block.
+    if ((g_DebugMatrixMode > 0 || g_DebugFlatMode) && (type == 1 || type == 2)) {
+        return 1; 
+    }
+
+    // Standard game logic (no hacks active)
+    struct ExtTexture *tex = getExtTexture(type, id, texnum);
+    return tex && tex->texnum >= 0;
 }
 
 char *resolveFontname(const u8 fontId)
@@ -192,11 +223,19 @@ u8 getTexPath(char *dst, u8 type, u16 id, s32 texnum)
 }
 
 
-void track_debug_tex(u16 id, s32 texnum) {
+void track_debug_tex(u8 type, u16 id, s32 texnum) {
+    if (g_DebugFreezeList) return;
+
+    // FIX: Only filter out Type 3 (Fonts). 
+    // Type 1 (General) and Type 2 (Models/Props) stay in the list!
+    if (type == 3) return; 
+
     if (debug_tex_count >= MAX_DEBUG_TEX) return;
+
     for (int i = 0; i < debug_tex_count; i++) {
         if (debug_tex_list[i] == (u16)texnum && debug_tex_id_list[i] == id) return;
     }
+
     debug_tex_id_list[debug_tex_count] = id;
     debug_tex_list[debug_tex_count] = (u16)texnum;
     debug_tex_count++;
@@ -204,26 +243,219 @@ void track_debug_tex(u16 id, s32 texnum) {
 
 u8 *extTexLoad(u8 type, u16 id, s32 texnum, u32 *width, u32 *height)
 {
+    // --- 1. ATTEMPT STANDARD HD LOAD FIRST ---
+    // We try to load your PNG before making any debug decisions (unless in Matrix Mode 2, which overrides all)
+    u8 *loaded_data = NULL;
     char path[FS_MAXPATH];
     u8 err = getTexPath(path, type, id, texnum);
-    if (err) {
-        return 0;
-    }
-
     struct ExtTexture *tex = getExtTexture(type, id, texnum);
 
-    if (!tex) {
-        return NULL;
+    if (g_DebugMatrixMode != 2 && !err && tex) {
+        #ifdef __APPLE__
+            stbi_set_flip_vertically_on_load(1);
+        #endif
+        u32 channels;
+        loaded_data = stbi_load(path, width, height, &channels, 4);
     }
 
-    // Your Mac Flip Fix
-    #ifdef __APPLE__
-        stbi_set_flip_vertically_on_load(1);
-    #endif
+    // --- 2. DECIDE IF WE SHOULD GENERATE THE MATRIX BLOCK ---
+    bool generate_matrix = false;
+    if (type == 1 || type == 2) {
+        if (g_DebugMatrixMode == 2) {
+            generate_matrix = true; // State 2: Tag everything
+        } else if (g_DebugMatrixMode == 1) {
+            if (loaded_data == NULL) {
+                generate_matrix = true; // State 1: ONLY tag if your HD texture is missing!
+            }
+        }
+    }
 
-    u32 channels;
-    tex->texdata = stbi_load(path, width, height, &channels, 4);
-    return tex->texdata;
+    // --- 3. THE MATRIX BLOCK GENERATOR ---
+    if (generate_matrix) {
+        // Free loaded_data if we loaded it but decided to override (should be NULL anyway)
+        if (loaded_data) {
+            stbi_image_free(loaded_data);
+            loaded_data = NULL;
+        }
+
+        *width = 64; 
+        *height = 64;
+        u8 *data = (u8 *)malloc(64 * 64 * 4);
+        
+        // Fill background with Dark Blue
+        for (int i = 0; i < 64 * 64 * 4; i += 4) {
+            data[i] = 0; data[i+1] = 0; data[i+2] = 80; data[i+3] = 255;
+        }
+        
+        int digits[6];
+        digits[0] = (id >> 4) & 0xF;      digits[1] = id & 0xF;
+        digits[2] = (texnum >> 12) & 0xF; digits[3] = (texnum >> 8) & 0xF;
+        digits[4] = (texnum >> 4) & 0xF;  digits[5] = texnum & 0xF;
+        
+        // Center File ID (Pink)
+        for (int d = 0; d < 2; d++) {
+            int startX = 22 + (d * 5);
+            int startY = 24;
+            for (int fy = 0; fy < 5; fy++) {
+                for (int fx = 0; fx < 3; fx++) {
+                    if (hex_font[digits[d]][fy * 3 + fx]) {
+                        int py = startY + fy; 
+                        int px = startX + fx;
+                        int idx = ((63 - py) * 64 + px) * 4;
+                        data[idx]=255; data[idx+1]=0; data[idx+2]=255; data[idx+3]=255;
+                    }
+                }
+            }
+        }
+        
+        // Center Tex ID (Yellow)
+        for (int d = 0; d < 4; d++) {
+            int startX = 18 + (d * 5);
+            int startY = 32;
+            for (int fy = 0; fy < 5; fy++) {
+                for (int fx = 0; fx < 3; fx++) {
+                    if (hex_font[digits[d+2]][fy * 3 + fx]) {
+                        int py = startY + fy;
+                        int px = startX + fx;
+                        int idx = ((63 - py) * 64 + px) * 4;
+                        data[idx]=255; data[idx+1]=255; data[idx+2]=0; data[idx+3]=255;
+                    }
+                }
+            }
+        }
+
+        // Top Border
+        for (int d = 0; d < 4; d++) {
+            int startX = 24 + (d * 4);
+            int startY = 2;
+            for (int fy = 0; fy < 5; fy++) {
+                for (int fx = 0; fx < 3; fx++) {
+                    if (hex_font[digits[d+2]][fy * 3 + fx]) {
+                        int px = startX + fx;
+                        int py = startY + fy;
+                        int idx = ((63 - py) * 64 + px) * 4;
+                        data[idx]=255; data[idx+1]=255; data[idx+2]=0; data[idx+3]=255;
+                    }
+                }
+            }
+        }
+
+        // Bottom Border
+        for (int d = 0; d < 4; d++) {
+            int startX = 36 - (d * 4);
+            int startY = 57;
+            for (int fy = 0; fy < 5; fy++) {
+                for (int fx = 0; fx < 3; fx++) {
+                    if (hex_font[digits[d+2]][fy * 3 + fx]) {
+                        int px = startX + (2 - fx);
+                        int py = startY + (4 - fy);
+                        int idx = ((63 - py) * 64 + px) * 4;
+                        data[idx]=255; data[idx+1]=255; data[idx+2]=0; data[idx+3]=255;
+                    }
+                }
+            }
+        }
+
+        // Left Border
+        for (int d = 0; d < 4; d++) {
+            int startX = 2;
+            int startY = 24 + (d * 4);
+            for (int fy = 0; fy < 5; fy++) {
+                for (int fx = 0; fx < 3; fx++) {
+                    if (hex_font[digits[d+2]][fy * 3 + fx]) {
+                        int px = startX + fy;
+                        int py = startY + (2 - fx);
+                        int idx = ((63 - py) * 64 + px) * 4;
+                        data[idx]=255; data[idx+1]=255; data[idx+2]=0; data[idx+3]=255;
+                    }
+                }
+            }
+        }
+
+        // Right Border
+        for (int d = 0; d < 4; d++) {
+            int startX = 57;
+            int startY = 24 + (d * 4);
+            for (int fy = 0; fy < 5; fy++) {
+                for (int fx = 0; fx < 3; fx++) {
+                    if (hex_font[digits[d+2]][fy * 3 + fx]) {
+                        int px = startX + (4 - fy);
+                        int py = startY + fx;
+                        int idx = ((63 - py) * 64 + px) * 4;
+                        data[idx]=255; data[idx+1]=255; data[idx+2]=0; data[idx+3]=255;
+                    }
+                }
+            }
+        }
+
+        if (tex) tex->texdata = data;
+        return data;
+    }
+
+    // --- 4. FLAT SHADING OVERRIDE ---
+    if (g_DebugFlatMode && (type == 1 || type == 2)) {
+        if (loaded_data) {
+            // 1. Texture exists! Make the interior white, and the outer 1-pixel border black.
+            u32 w = *width;
+            u32 h = *height;
+            
+            for (u32 y = 0; y < h; y++) {
+                for (u32 x = 0; x < w; x++) {
+                    u32 i = (y * w + x) * 4;
+                    
+                    // Check if the pixel is on the outermost border of the texture
+                    if (x == 0 || x == w - 1 || y == 0 || y == h - 1) {
+                        loaded_data[i]   = 0;   // R (Black outline)
+                        loaded_data[i+1] = 0;   // G
+                        loaded_data[i+2] = 0;   // B
+                        // We leave Alpha [i+3] untouched so grates/glass keep their shapes!
+                    } else {
+                        loaded_data[i]   = 255; // R (White fill)
+                        loaded_data[i+1] = 255; // G
+                        loaded_data[i+2] = 255; // B
+                    }
+                }
+            }
+            
+            if (tex) tex->texdata = loaded_data;
+            return loaded_data;
+
+        } else {
+            // 2. Texture is missing! Generate a 16x16 grid tile with a black border.
+            *width = 16;
+            *height = 16;
+            u8 *proc_data = (u8 *)malloc(16 * 16 * 4);
+            
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    int i = (y * 16 + x) * 4;
+                    
+                    if (x == 0 || x == 15 || y == 0 || y == 15) {
+                        proc_data[i]   = 0;   // R (Black outline)
+                        proc_data[i+1] = 0;   // G
+                        proc_data[i+2] = 0;   // B
+                        proc_data[i+3] = 255; // Solid opacity
+                    } else {
+                        proc_data[i]   = 255; // R (White fill)
+                        proc_data[i+1] = 255; // G
+                        proc_data[i+2] = 255; // B
+                        proc_data[i+3] = 255;
+                    }
+                }
+            }
+            
+            if (tex) tex->texdata = proc_data;
+            return proc_data;
+        }
+    }
+
+    // --- 5. STANDARD RETURN (Normal HD Texture) ---
+    if (loaded_data) {
+        if (tex) tex->texdata = loaded_data;
+        return loaded_data;
+    }
+
+    return NULL;
 }
 
 u8 extTexFontID(struct font *font) {
