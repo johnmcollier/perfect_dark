@@ -23,8 +23,6 @@ u32 g_CheatsEnabledBank1;
 struct menuitem g_CheatsBuddiesMenuItems[];
 struct menudialogdef g_CheatsBuddiesMenuDialog;
 
-#define CHEAT_ALLDOORS_TEXT "All Doors Unlocked\n"
-
 #define TIME(mins, secs) (mins * 60 + secs)
 #define m
 #define s
@@ -108,6 +106,14 @@ struct cheat g_Cheats[] = {
 #endif
 
 };
+
+// Lookup table for custom cheats added to the PC Port
+#ifndef PLATFORM_N64
+static const char *g_CustomCheatNames[] = {
+    [CHEAT_DUALWIELDALLGUNS] = "Dual Wield All Weapons\n",
+    [CHEAT_ALLDOORSUNLOCKED] = "All Doors Unlocked\n",
+};
+#endif
 
 u32 cheatIsUnlocked(s32 cheat_id)
 {
@@ -396,12 +402,7 @@ MenuItemHandlerResult cheatMenuHandleBuddyCheckbox(s32 operation, struct menuite
 char *cheatGetNameIfUnlocked(struct menuitem *item)
 {
 	if (cheatIsUnlocked(item->param)) {
-		if (item->param == CHEAT_ALLDOORSUNLOCKED) {
-			// When retrieving the display name for the "All Doors Unlocked" cheat, directly return its string, as it doesn't exist in the assets used for cheats
-			return CHEAT_ALLDOORS_TEXT;
-		} else {
-			return langGet(g_Cheats[item->param].nametextid);
-		}
+		return cheatGetName(item->param);
 	}
 
 	return langGet(L_MPWEAPONS_074); // "----------"
@@ -514,11 +515,7 @@ char *cheatGetMarquee(struct menuitem *arg0)
 			&& g_Menus[g_MpPlayerNum].curdialog->focuseditem->type == MENUITEMTYPE_CHECKBOX) {
 		cheat_id = g_Menus[g_MpPlayerNum].curdialog->focuseditem->param;
 
-		if (cheat_id == CHEAT_ALLDOORSUNLOCKED) {
-			strcpy(cheatname, CHEAT_ALLDOORS_TEXT);
-		} else {
-			strcpy(cheatname, langGet(g_Cheats[cheat_id].nametextid));
-		}
+		strcpy(cheatname, cheatGetName(cheat_id));
 
 		if (g_Menus[g_MpPlayerNum].curdialog->definition == &g_CheatsBuddiesMenuDialog
 				&& g_Menus[g_MpPlayerNum].curdialog->focuseditem == &g_CheatsBuddiesMenuItems[0]) {
@@ -602,11 +599,7 @@ char *cheatGetMarquee(struct menuitem *arg0)
 			&& g_Menus[g_MpPlayerNum].curdialog->focuseditem->type == MENUITEMTYPE_CHECKBOX) {
 		cheat_id = g_Menus[g_MpPlayerNum].curdialog->focuseditem->param;
 
-		if (cheat_id == CHEAT_ALLDOORSUNLOCKED) {
-			strcpy(cheatname, CHEAT_ALLDOORS_TEXT);
-		} else {
-			strcpy(cheatname, langGet(g_Cheats[cheat_id].nametextid));
-		}
+		strcpy(cheatname, cheatGetName(cheat_id));
 
 		if (g_Menus[g_MpPlayerNum].curdialog->definition == &g_CheatsBuddiesMenuDialog
 				&& g_Menus[g_MpPlayerNum].curdialog->focuseditem == &g_CheatsBuddiesMenuItems[0]) {
@@ -686,11 +679,7 @@ char *cheatGetMarquee(struct menuitem *arg0)
 			&& g_Menus[g_MpPlayerNum].curdialog->focuseditem->type == MENUITEMTYPE_CHECKBOX) {
 		cheat_id = g_Menus[g_MpPlayerNum].curdialog->focuseditem->param;
 
-		if (cheat_id == CHEAT_ALLDOORSUNLOCKED) {
-			strcpy(cheatname, CHEAT_ALLDOORS_TEXT);
-		} else {
-			strcpy(cheatname, langGet(g_Cheats[cheat_id].nametextid));
-		}
+		strcpy(cheatname, cheatGetName(cheat_id));
 
 		if (g_Menus[g_MpPlayerNum].curdialog->definition == &g_CheatsBuddiesMenuDialog
 				&& g_Menus[g_MpPlayerNum].curdialog->focuseditem == &g_CheatsBuddiesMenuItems[0]) {
@@ -880,11 +869,14 @@ s32 cheatGetTime(s32 cheat_id)
 #endif
 
 #if VERSION >= VERSION_NTSC_1_0
-char *cheatGetName(s32 cheat_id)
+const char *cheatGetName(s32 cheat_id)
 {
-	if (cheat_id == CHEAT_ALLDOORSUNLOCKED) {
-		return CHEAT_ALLDOORS_TEXT;
+#ifndef PLATFORM_N64
+	// If the cheat's one of the custom cheats added to the PC port, look up the string literal directly
+    if (g_CustomCheatNames[cheat_id]) {
+        return g_CustomCheatNames[cheat_id];
 	}
+#endif
 	return langGet(g_Cheats[cheat_id].nametextid);
 }
 #endif
